@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
-# Copyright (c) 2021-2025 community-scripts ORG
-# Author: Homelab User
+# Author: damiaan111
 # License: MIT
-# Source: Local
 
 APP="HomeLab-Dashboard"
 var_tags="dashboard;homelab"
@@ -17,12 +15,12 @@ var_unprivileged="1"
 header_info() {
   clear
   cat << "EOF"
-    __  __                   __          __       ____            __    __
-   / / / /___  ____ ___  ___/ /   ____ _/ /_     / __ \____ ____/ /_  / /_  ____  ____ __________/ /
-  / /_/ / __ \/ __ `__ \/ _ / /   / __ `/ __ \  / / / / __ `/ __  __ \/ __ \/ __ \/ __ `/ ___/ __  /
- / __  / /_/ / / / / / /  __/ /___/ /_/ / /_/ / / /_/ / /_/ (__  ) / / / /_/ / /_/ / /_/ / /  / /_/ /
-/_/ /_/\____/_/ /_/ /_/\___/_____/\__,_/_.___/ /_____/\__,_/____/_/ /_/_.___/\____/\__,_/_/   \__,_/
-                                                                            HomeLab Dashboard v1.0
+    __  __                   __      __       ____            __    __  
+   / / / /___  ____ ___  ___/ /   __/ /_     / __ \____ ____/ /_  / /_ 
+  / /_/ / __ \/ __ `__ \/ _ / /  / / __ \  / / / / __ `/ __  __ \/ __ \
+ / __  / /_/ / / / / / /  __/ /__/ / /_/ / / /_/ / /_/ (__  ) / / / /_/ /
+/_/ /_/\____/_/ /_/ /_/\___/____/_/_.___/ /_____/\__,_/____/_/ /_/_.___/ 
+                                              HomeLab Dashboard v1.0
 EOF
 }
 
@@ -65,8 +63,7 @@ description
 
 msg_ok "Container aangemaakt (ID: ${CT_ID})"
 
-# Installeer in de container
-lxc-attach -n ${CT_ID} -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/damiaan111/homelab-dashboard/main/install/homelab-dashboard-install.sh)"
+lxc-attach -n ${CT_ID} -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/install/homelab-dashboard-install.sh)"
 
 IP=$(lxc-info -n ${CT_ID} -iH | head -n1)
 echo -e "\n${APP} is succesvol geinstalleerd!\n"
