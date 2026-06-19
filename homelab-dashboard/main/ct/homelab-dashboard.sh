@@ -1,50 +1,24 @@
 #!/usr/bin/env bash
-source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
 # Author: damiaan111
 # License: MIT
 
 APP="HomeLab-Dashboard"
-var_tags="dashboard;homelab"
-var_cpu="1"
-var_ram="256"
-var_disk="2"
-var_os="debian"
-var_version="12"
-var_unprivileged="1"
+var_tags="${var_tags:-dashboard;homelab}"
+var_cpu="${var_cpu:-1}"
+var_ram="${var_ram:-256}"
+var_disk="${var_disk:-2}"
+var_os="${var_os:-debian}"
+var_version="${var_version:-12}"
+var_unprivileged="${var_unprivileged:-1}"
 
-header_info() {
-  clear
-  cat << "EOF"
-    __  __                   __      __       ____            __    __  
-   / / / /___  ____ ___  ___/ /   __/ /_     / __ \____ ____/ /_  / /_ 
-  / /_/ / __ \/ __ `__ \/ _ / /  / / __ \  / / / / __ `/ __  __ \/ __ \
- / __  / /_/ / / / / / /  __/ /__/ / /_/ / / /_/ / /_/ (__  ) / / / /_/ /
-/_/ /_/\____/_/ /_/ /_/\___/____/_/_.___/ /_____/\__,_/____/_/ /_/_.___/ 
-                                              HomeLab Dashboard v1.0
-EOF
-}
-
-header_info
-echo -e "Laden..."
-start_script
-
+header_info "$APP"
+variables
 color
 catch_errors
 
-function default_settings() {
-  CT_TYPE="1"
-  DISK_SIZE="$var_disk"
-  CORE_COUNT="$var_cpu"
-  RAM_SIZE="$var_ram"
-  OS_TYPE="$var_os"
-  OS_VERSION="$var_version"
-  TAGS="$var_tags"
-  VERB="no"
-  echo_default
-}
-
 function update_script() {
-  header_info
+  header_info "$APP"
   check_container_storage
   check_container_resources
   if [[ ! -d /opt/homelab-dashboard ]]; then
