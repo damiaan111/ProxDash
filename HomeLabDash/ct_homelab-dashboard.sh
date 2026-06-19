@@ -66,7 +66,7 @@ description
 msg_ok "Container aangemaakt (ID: ${CT_ID})"
 
 # Installeer in de container
-lxc-attach -n ${CT_ID} -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/JOUW_GITHUB_USERNAME/homelab-dashboard/main/install/homelab-dashboard-install.sh)"
+lxc-attach -n ${CT_ID} -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/damiaan111/homelab-dashboard/main/install/homelab-dashboard-install.sh)"
 
 IP=$(lxc-info -n ${CT_ID} -iH | head -n1)
 echo -e "\n${APP} is succesvol geinstalleerd!\n"
