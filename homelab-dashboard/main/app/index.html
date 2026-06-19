@@ -509,7 +509,7 @@
     </div>
     <div class="form-group">
       <label>URL</label>
-      <input type="text" id="f-url" placeholder="http://192.168.1.x:8006" />
+      <input type="text" id="f-url" placeholder="http://10.10.5.x:8006" />
     </div>
     <div class="form-group">
       <label>Omschrijving</label>
@@ -562,14 +562,14 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const DEFAULT_SERVICES = [
-  { id: 's1', name: 'Proxmox VE',      url: 'https://192.168.1.1:8006', desc: 'Virtualisatie beheer',     cat: 'infra',    icon: '🖥️', status: 'online',  tag: 'Host' },
-  { id: 's2', name: 'Nginx Proxy Mgr', url: 'http://192.168.1.1:81',   desc: 'Reverse proxy beheer',      cat: 'netwerk',  icon: '🌐', status: 'online',  tag: 'LXC' },
-  { id: 's3', name: 'Immich',           url: 'http://192.168.1.1:2283', desc: 'Foto & video bibliotheek',  cat: 'media',    icon: '📷', status: 'online',  tag: 'LXC' },
-  { id: 's4', name: 'Portainer',        url: 'http://192.168.1.1:9000', desc: 'Docker container beheer',   cat: 'infra',    icon: '🐋', status: 'online',  tag: 'LXC' },
-  { id: 's5', name: 'Jellyfin',         url: 'http://192.168.1.1:8096', desc: 'Media server',              cat: 'media',    icon: '📺', status: 'online',  tag: 'LXC' },
-  { id: 's6', name: 'Cloudflared',      url: 'http://192.168.1.1:14333', desc: 'Zero Trust tunnel',        cat: 'netwerk',  icon: '🛡️', status: 'online',  tag: 'LXC' },
-  { id: 's7', name: 'Uptime Kuma',      url: 'http://192.168.1.1:3001', desc: 'Service monitoring',        cat: 'monitoring', icon: '📊', status: 'online', tag: 'LXC' },
-  { id: 's8', name: 'Home Assistant',   url: 'http://192.168.1.1:8123', desc: 'Home automation',           cat: 'overig',   icon: '🏠', status: 'online',  tag: 'VM' },
+  { id: 's1', name: 'Proxmox VE',      url: 'https://10.10.5.1:8006', desc: 'Virtualisatie beheer',     cat: 'infra',    icon: '🖥️', status: 'online',  tag: 'Host' },
+  { id: 's2', name: 'Nginx Proxy Mgr', url: 'http://10.10.5.1:81',   desc: 'Reverse proxy beheer',      cat: 'netwerk',  icon: '🌐', status: 'online',  tag: 'LXC' },
+  { id: 's3', name: 'Immich',           url: 'http://10.10.5.1:2283', desc: 'Foto & video bibliotheek',  cat: 'media',    icon: '📷', status: 'online',  tag: 'LXC' },
+  { id: 's4', name: 'Portainer',        url: 'http://10.10.5.1:9000', desc: 'Docker container beheer',   cat: 'infra',    icon: '🐋', status: 'online',  tag: 'LXC' },
+  { id: 's5', name: 'Jellyfin',         url: 'http://10.10.5.1:8096', desc: 'Media server',              cat: 'media',    icon: '📺', status: 'online',  tag: 'LXC' },
+  { id: 's6', name: 'Cloudflared',      url: 'http://10.10.5.1:14333', desc: 'Zero Trust tunnel',        cat: 'netwerk',  icon: '🛡️', status: 'online',  tag: 'LXC' },
+  { id: 's7', name: 'Uptime Kuma',      url: 'http://10.10.5.1:3001', desc: 'Service monitoring',        cat: 'monitoring', icon: '📊', status: 'online', tag: 'LXC' },
+  { id: 's8', name: 'Home Assistant',   url: 'http://10.10.5.1:8123', desc: 'Home automation',           cat: 'overig',   icon: '🏠', status: 'online',  tag: 'VM' },
 ];
 
 // ═══════════════════════════════════════════════
@@ -714,7 +714,7 @@ function openModal(svc, defaultCat) {
 
   document.getElementById('modal-title').textContent = isEdit ? '✏️ Service bewerken' : '➕ Service toevoegen';
   document.getElementById('f-name').value  = svc?.name  || '';
-  document.getElementById('f-url').value   = svc?.url   || 'http://192.168.1.';
+  document.getElementById('f-url').value   = svc?.url   || 'http://10.10.5.';
   document.getElementById('f-desc').value  = svc?.desc  || '';
   document.getElementById('f-tag').value   = svc?.tag   || '';
   document.getElementById('f-status').value = svc?.status || 'online';
@@ -891,6 +891,69 @@ document.addEventListener('keydown', (e) => {
 render();
 updateClock();
 setInterval(updateClock, 1000);
+// Check statussen bij pagina-load
+checkAllServices();
+
+// ═══════════════════════════════════════════════
+//  ONLINE / OFFLINE CHECK
+// ═══════════════════════════════════════════════
+
+async function checkService(url) {
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 3000);
+    // mode: no-cors geeft een opaque response terug als server reageert
+    // Een AbortError betekent timeout = offline
+    await fetch(url, { method: 'GET', mode: 'no-cors', signal: controller.signal, cache: 'no-store' });
+    clearTimeout(tid);
+    return 'online';
+  } catch (e) {
+    return 'offline';
+  }
+}
+
+async function checkAllServices() {
+  let changed = false;
+  for (const svc of state.services) {
+    if (svc.status === 'warning') continue; // onderhoud: niet automatisch overschrijven
+    const newStatus = await checkService(svc.url);
+    if (newStatus !== svc.status) {
+      svc.status = newStatus;
+      changed = true;
+    }
+  }
+  saveState();
+  if (changed) {
+    render();
+    showToast('🔄 Statussen bijgewerkt');
+  }
+  // Schrijf ook terug naar bestand op server
+  saveToFile();
+}
+
+// ═══════════════════════════════════════════════
+//  TERUGSCHRIJVEN NAAR HTML BESTAND (via backend)
+// ═══════════════════════════════════════════════
+
+async function saveToFile() {
+  try {
+    await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  } catch (e) {
+    // Geen backend beschikbaar (bijv. file://) — stil falen
+  }
+}
+
+// Patch saveService zodat wijzigingen ook naar bestand gaan
+const _origSaveService = saveService;
+saveService = function() {
+  _origSaveService();
+  saveToFile();
+};
+
 </script>
 </body>
 </html>
