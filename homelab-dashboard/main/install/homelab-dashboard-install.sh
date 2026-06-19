@@ -25,15 +25,15 @@ msg_info "App directory aanmaken..."
 mkdir -p "$APP_DIR"
 msg_ok "Directory: $APP_DIR"
 
-# ── 4. HTML dashboard schrijven
+# ── 4. HTML dashboard ophalen
 msg_info "Dashboard HTML ophalen..."
-curl -fsSL "https://raw.githubusercontent.com/damiaan111/homelab-dashboard/main/app/index.html" \
+curl -fsSL "https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/app/index.html" \
   -o "$APP_DIR/index.html"
 msg_ok "index.html geschreven"
 
 # ── 5. Backend server ophalen
 msg_info "Backend server ophalen..."
-curl -fsSL "https://raw.githubusercontent.com/damiaan111/homelab-dashboard/main/app/server.js" \
+curl -fsSL "https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/app/server.js" \
   -o "$APP_DIR/server.js"
 msg_ok "server.js geschreven"
 
