@@ -449,6 +449,130 @@
       border-radius: 6px;
     }
 
+
+    /* ── EDIT MODE ── */
+    body.edit-mode #edit-mode-btn {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .edit-mode .card {
+      cursor: default;
+    }
+
+    .editable-name {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: inherit;
+      font-weight: inherit;
+      font-family: inherit;
+      padding: 2px 4px;
+      border-radius: 4px;
+      width: 100%;
+      outline: none;
+      pointer-events: none;
+    }
+
+    .edit-mode .editable-name {
+      pointer-events: all;
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      cursor: text;
+    }
+
+    .editable-name:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 2px rgba(0,212,170,0.2);
+    }
+
+    .edit-section-name {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-family: inherit;
+      padding: 2px 6px;
+      border-radius: 4px;
+      outline: none;
+      pointer-events: none;
+      width: auto;
+      min-width: 80px;
+    }
+
+    .edit-mode .edit-section-name {
+      pointer-events: all;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: text;
+    }
+
+    .edit-mode .edit-section-name:focus {
+      border-color: var(--accent);
+    }
+
+    /* Verberg add-card en card-links in edit mode */
+    .edit-mode .add-card {
+      display: none;
+    }
+
+    .edit-mode .card {
+      pointer-events: all;
+    }
+
+    .edit-mode a.card {
+      text-decoration: none;
+      cursor: default;
+    }
+
+    /* Edit overlay op kaart in bewerkingsmodus */
+    .card-edit-overlay {
+      display: none;
+      position: absolute;
+      top: 6px; right: 6px;
+      background: var(--accent);
+      border-radius: 6px;
+      width: 24px; height: 24px;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .edit-mode .card-edit-overlay {
+      display: flex;
+    }
+
+    .edit-save-bar {
+      display: none;
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      padding: 0.7rem 2rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 500;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.5);
+      gap: 10px;
+      align-items: center;
+      transition: opacity 0.2s;
+    }
+
+    .edit-mode .edit-save-bar {
+      display: flex;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
       main { padding: 1rem; }
@@ -469,10 +593,8 @@
   </div>
   <div class="header-right">
     <input type="text" id="search-input" placeholder="🔍  Zoeken..." oninput="filterCards(this.value)" />
-    <button class="btn btn-ghost" onclick="exportData()" title="Exporteer configuratie naar JSON">📥 Export</button>
-    <label class="btn btn-ghost" title="Importeer configuratie vanuit JSON" style="cursor:pointer">
-      📤 Import <input type="file" accept=".json" onchange="importData(event)" style="display:none" />
-    </label>
+    <button class="btn btn-ghost" id="refresh-btn" onclick="manualRefresh()" title="Controleer statussen nu">🔄 Refresh</button>
+    <button class="btn btn-ghost" id="edit-mode-btn" onclick="toggleEditMode()" title="Bewerkingsmodus aan/uit">✏️ Bewerken</button>
     <span id="clock"></span>
   </div>
 </header>
@@ -543,6 +665,12 @@
   </div>
 </div>
 
+
+<!-- EDIT SAVE BAR -->
+<div class="edit-save-bar" onclick="toggleEditMode()">
+  ✅ Wijzigingen opslaan & afsluiten
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -610,7 +738,11 @@ function render() {
     const section = document.createElement('div');
     section.innerHTML = `
       <div class="section-header" style="--card-color:${cat.color}">
-        <span>${cat.name}</span>
+        <input class="edit-section-name" value="${cat.name}" readonly
+          data-cat-id="${cat.id}"
+          onchange="renameCategory('${cat.id}', this.value)"
+          onblur="renameCategory('${cat.id}', this.value)"
+          onclick="event.stopPropagation();" />
       </div>
       <div class="card-grid" id="grid-${cat.id}"></div>
     `;
@@ -652,7 +784,11 @@ function createCard(svc, color) {
       <div class="card-icon">${svc.icon}</div>
       <span class="status-badge ${statusClass}">${statusLabel}</span>
     </div>
-    <div class="card-name">${svc.name}</div>
+    <div class="card-edit-overlay" onclick="event.preventDefault(); event.stopPropagation(); openModal(state.services.find(s=>s.id==='${svc.id}'))">✏️</div>
+    <input class="editable-name card-name" value="${svc.name}" readonly
+      onchange="renameService('${svc.id}', this.value)"
+      onclick="event.preventDefault(); event.stopPropagation();"
+      onblur="renameService('${svc.id}', this.value)" />
     <div class="card-desc">${svc.desc}</div>
     <div class="card-meta">
       <span class="card-tag">${svc.tag || ''}</span>
@@ -891,8 +1027,7 @@ document.addEventListener('keydown', (e) => {
 render();
 updateClock();
 setInterval(updateClock, 1000);
-// Check statussen bij pagina-load
-checkAllServices();
+// Statussen worden handmatig gerefreshed via de knop
 
 // ═══════════════════════════════════════════════
 //  ONLINE / OFFLINE CHECK
@@ -953,6 +1088,90 @@ saveService = function() {
   _origSaveService();
   saveToFile();
 };
+
+
+// ═══════════════════════════════════════════════
+//  EDIT MODE
+// ═══════════════════════════════════════════════
+
+let editMode = false;
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  const btn = document.getElementById('edit-mode-btn');
+  btn.textContent = editMode ? '✅ Klaar' : '✏️ Bewerken';
+
+  // In edit mode: voorkom navigatie bij klikken op kaarten
+  document.querySelectorAll('a.card').forEach(card => {
+    if (editMode) {
+      card.dataset.href = card.href;
+      card.removeAttribute('href');
+    } else {
+      if (card.dataset.href) card.href = card.dataset.href;
+    }
+  });
+
+  // Maak naam-inputs bewerkbaar/readonly
+  document.querySelectorAll('.editable-name').forEach(inp => {
+    inp.readOnly = !editMode;
+  });
+  document.querySelectorAll('.edit-section-name').forEach(inp => {
+    inp.readOnly = !editMode;
+  });
+
+  if (!editMode) {
+    saveState();
+    saveToFile();
+    showToast('💾 Wijzigingen opgeslagen');
+  } else {
+    showToast('✏️ Bewerkingsmodus actief');
+  }
+}
+
+function renameService(id, newName) {
+  if (!newName.trim()) return;
+  const svc = state.services.find(s => s.id === id);
+  if (svc && svc.name !== newName.trim()) {
+    svc.name = newName.trim();
+  }
+}
+
+function renameCategory(id, newName) {
+  if (!newName.trim()) return;
+  const cat = state.categories.find(c => c.id === id);
+  if (cat && cat.name !== newName.trim()) {
+    cat.name = newName.trim();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  HANDMATIGE REFRESH KNOP
+// ═══════════════════════════════════════════════
+
+async function manualRefresh() {
+  const btn = document.getElementById('refresh-btn');
+  btn.textContent = '⏳ Bezig...';
+  btn.disabled = true;
+
+  let changed = false;
+  for (const svc of state.services) {
+    if (svc.status === 'warning') continue;
+    const newStatus = await checkService(svc.url);
+    if (newStatus !== svc.status) {
+      svc.status = newStatus;
+      changed = true;
+    }
+  }
+
+  saveState();
+  saveToFile();
+  render();
+
+  btn.textContent = '🔄 Refresh';
+  btn.disabled = false;
+  showToast(changed ? '🔄 Statussen bijgewerkt' : '✅ Alles up-to-date');
+}
 
 </script>
 </body>
