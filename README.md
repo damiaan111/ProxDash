@@ -1,54 +1,58 @@
 # 🖥️ ProxDash — HomeLab Dashboard
 
-Een moderne, zelfgehoste dashboard voor je HomeLab — draait als LXC container op Proxmox VE.
-
-![ProxDash](https://img.shields.io/badge/ProxDash-v2.0-3b82f6?style=for-the-badge&logo=proxmox&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Proxmox%20VE-e57000?style=for-the-badge)
+![ProxDash](https://img.shields.io/badge/ProxDash-v2.1-3b82f6?style=for-the-badge&logo=proxmox&logoColor=white)
+![Platform](https://img.shields.io/badge/Proxmox%20VE-7%2B-e57000?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-06d6a0?style=for-the-badge)
+
+Een zelfgebouwd dashboard voor je homelabservices. Geen account, geen cloud, geen gedoe — gewoon een LXC container op je Proxmox host draaien en je bent klaar.
 
 ---
 
-## 🚀 Installatie
+## 🚀 Installeren
 
-Kopieer en plak dit commando in de **Proxmox VE shell** (als root):
+Open de shell op je **Proxmox host** (als root) en plak dit commando:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/ct/homelab-dashboard.sh)"
 ```
 
-> **Vereisten:** Proxmox VE 7 of hoger · Root toegang · Internetverbinding · DHCP op je bridge
+Het script regelt alles: container aanmaken, Node.js installeren, bestanden neerzetten en de service opstarten. Na een minuut of twee zie je het IP-adres en ben je klaar.
 
-Het script doet automatisch het volgende:
-- Maakt een Debian 12 LXC container aan (256MB RAM, 2GB disk, 1 core)
-- Installeert Node.js 20.x
-- Download de dashboard bestanden
-- Start de `proxdash` systemd service
-- Toont het IP-adres en de URL na installatie
+> **Wat je nodig hebt:** Proxmox VE 7 of hoger · root toegang · DHCP actief op je bridge (standaard `vmbr0`)
 
 ---
 
-## 🌐 Openen
-
-Na installatie open je het dashboard op:
+## 🌐 Dashboard openen
 
 ```
 http://<container-ip>:7575
 ```
 
-Het IP-adres wordt getoond aan het einde van het installatie-script.
+Het IP-adres wordt aan het einde van het installatiescript getoond. Weet je het niet meer? Doe dan `pct list` en daarna `pct exec <ID> -- hostname -I`.
 
 ---
 
-## ✨ Features
+## ✨ Wat kan het?
 
-- **Geanimeerde IT-achtergrond** — Matrix-stijl regen met binaire karakters
-- **Bewerkingsmodus** — Klik op ✏️ Bewerken om namen van services en categorieën direct in de interface aan te passen
-- **Handmatige status refresh** — 🔄 Refresh knop controleert alle services op online/offline
-- **Rechtermuisklik menu** — Snel bewerken, openen of verwijderen via contextmenu
-- **Zoekfunctie** — Zoek direct via `Ctrl+K` / `⌘K`
-- **Categorieën met kleur** — Services gegroepeerd per categorie met eigen kleur
-- **Responsive** — Werkt op desktop en mobiel
-- **Geen externe dependencies** — Volledig zelfstandig, geen cloud services
+- **Geanimeerde achtergrond** — matrix-stijl regen op de achtergrond, subtiel genoeg om niet af te leiden
+- **Services beheren** — toevoegen, bewerken en verwijderen via een netjes modaal venster
+- **Bewerkingsmodus** — klik op *Bewerken* (of druk `E`) om namen direct in het dashboard aan te passen
+- **Status checken** — klik op *Refresh* om alle services snel te pingen en de status bij te werken
+- **Laatste controle** — kaarten tonen wanneer ze voor het laatst gecheckt zijn (bijv. *✓ 3 min geleden*)
+- **Rechtermuisklik menu** — snelmenu per service voor bewerken, openen of verwijderen
+- **Zoeken** — zoek direct met `Ctrl+K` of `⌘K`
+- **Lege categorieën** verbergen zichzelf automatisch
+- **State opgeslagen in `state.json`** — je instellingen blijven bewaard, ook na een herstart van de container
+
+---
+
+## ⌨️ Sneltoetsen
+
+| Toets | Actie |
+|---|---|
+| `E` | Bewerkingsmodus aan/uit |
+| `Ctrl+K` / `⌘K` | Zoekbalk focussen |
+| `Escape` | Modal sluiten / bewerkingsmodus verlaten |
 
 ---
 
@@ -59,12 +63,12 @@ Het IP-adres wordt getoond aan het einde van het installatie-script.
 pct exec <CT_ID> -- systemctl restart proxdash
 ```
 
-**Logs bekijken:**
+**Logs bekijken (live):**
 ```bash
 pct exec <CT_ID> -- journalctl -u proxdash -f
 ```
 
-**Dashboard handmatig updaten:**
+**Dashboard handmatig updaten naar de nieuwste versie:**
 ```bash
 curl -fsSL "https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/app/index.html" \
   -o /tmp/index.html
@@ -74,7 +78,7 @@ pct push <CT_ID> /tmp/index.html /opt/homelab-dashboard/index.html
 pct exec <CT_ID> -- systemctl restart proxdash
 ```
 
-> Vervang `<CT_ID>` met het ID van jouw container (te vinden via `pct list`)
+> Vervang `<CT_ID>` met het ID van jouw container. Weet je het niet? Kijk met `pct list`.
 
 ---
 
@@ -85,16 +89,16 @@ ProxDash/
 └── homelab-dashboard/
     └── main/
         ├── app/
-        │   ├── index.html          # Dashboard frontend (single-file app)
-        │   └── server.js           # Node.js backend server
+        │   ├── index.html                    # De volledige dashboard app (één bestand)
+        │   └── server.js                     # Node.js server — serveert de app en beheert state.json
         ├── ct/
-        │   └── homelab-dashboard.sh    # Proxmox LXC installer script
+        │   └── homelab-dashboard.sh          # Draai dit op je Proxmox host om alles te installeren
         └── install/
-            └── homelab-dashboard-install.sh  # Install script (draait in container)
+            └── homelab-dashboard-install.sh  # Installatielogica die in de container draait
 ```
 
 ---
 
 ## 📝 Licentie
 
-MIT — vrij te gebruiken, aanpassen en delen.
+MIT — gebruik het, pas het aan, doe er mee wat je wilt.

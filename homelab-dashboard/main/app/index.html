@@ -4,34 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProxDash — HomeLab Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='7' fill='url(%23g)'/%3E%3Cpath d='M7 10h4v8H7zM12 7h4v11h-4zM17 12h4v6h-4z' fill='white' opacity='.9'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='28' y2='28'%3E%3Cstop offset='0%25' stop-color='%233b82f6'/%3E%3Cstop offset='100%25' stop-color='%2306d6a0'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:           #0a0c10;
-      --surface:      #111318;
-      --surface2:     #181b22;
-      --surface3:     #1e2230;
-      --border:       rgba(255,255,255,0.07);
-      --border-hover: rgba(255,255,255,0.14);
-      --text:         #e2e6f0;
-      --text-muted:   #6b7280;
-      --text-faint:   #3d4350;
-      --accent:       #3b82f6;
-      --accent-glow:  rgba(59,130,246,0.25);
-      --accent2:      #06d6a0;
-      --accent2-glow: rgba(6,214,160,0.2);
-      --danger:       #ef4444;
-      --warning:      #f59e0b;
-      --online:       #06d6a0;
-      --offline:      #ef4444;
-      --radius-sm:    6px;
-      --radius:       10px;
-      --radius-lg:    14px;
-      --transition:   180ms cubic-bezier(0.16,1,0.3,1);
-      --font-body:    'Inter', system-ui, sans-serif;
-      --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+      --bg:#0a0c10;--surface:#111318;--surface2:#181b22;--surface3:#1e2230;
+      --border:rgba(255,255,255,0.07);--border-hover:rgba(255,255,255,0.14);
+      --text:#e2e6f0;--text-muted:#6b7280;--text-faint:#3d4350;
+      --accent:#3b82f6;--accent-glow:rgba(59,130,246,0.25);
+      --accent2:#06d6a0;--accent2-glow:rgba(6,214,160,0.2);
+      --danger:#ef4444;--warning:#f59e0b;--online:#06d6a0;--offline:#ef4444;
+      --radius-sm:6px;--radius:10px;--radius-lg:14px;
+      --transition:180ms cubic-bezier(0.16,1,0.3,1);
+      --font-body:'Inter',system-ui,sans-serif;
+      --font-mono:'JetBrains Mono','Fira Code',monospace;
       --space-1:.25rem;--space-2:.5rem;--space-3:.75rem;
       --space-4:1rem;--space-6:1.5rem;--space-8:2rem;
       --text-xs:clamp(0.75rem,0.7rem + 0.25vw,0.875rem);
@@ -117,6 +105,7 @@
       font-size:10px;font-family:var(--font-mono);color:var(--text-faint)}
     .card-tag{background:var(--surface2);border:1px solid var(--border);
       padding:1px 6px;border-radius:4px;color:var(--text-muted)}
+    .card-checked{font-size:9px;color:var(--text-faint);font-family:var(--font-mono)}
     a.card.hidden{display:none}
 
     .add-card{background:transparent;border:1px dashed var(--border);border-radius:var(--radius-lg);
@@ -246,7 +235,7 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
       Refresh
     </button>
-    <button class="btn btn-ghost" id="edit-mode-btn" onclick="toggleEditMode()" title="Bewerkingsmodus">
+    <button class="btn btn-ghost" id="edit-mode-btn" onclick="toggleEditMode()" title="Bewerkingsmodus (E)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Bewerken
     </button>
@@ -335,66 +324,87 @@
 <div id="toast"></div>
 
 <script>
-// ── CANVAS ACHTERGROND
-(function initCanvas(){
-  const canvas=document.getElementById('bg-canvas');
-  const ctx=canvas.getContext('2d');
+// ── CANVAS
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
   const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
-  let cols,drops;
-  const fs=13;
-  function resize(){
-    canvas.width=window.innerWidth;canvas.height=window.innerHeight;
-    cols=Math.floor(canvas.width/fs);
-    drops=Array.from({length:cols},()=>Math.random()*-50);
-  }
+  const fs=13;let cols,drops;
+  function resize(){cv.width=innerWidth;cv.height=innerHeight;
+    cols=Math.floor(cv.width/fs);
+    drops=Array.from({length:cols},()=>Math.random()*-50);}
   function draw(){
-    ctx.fillStyle='rgba(10,12,16,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(10,12,16,0.05)';ctx.fillRect(0,0,cv.width,cv.height);
     ctx.font=fs+'px JetBrains Mono,monospace';
     for(let i=0;i<cols;i++){
       const y=drops[i]*fs;
-      const alpha=Math.max(0.05,Math.min(0.6,1-(y/canvas.height)));
-      ctx.fillStyle=`rgba(59,130,246,${alpha*0.7})`;
-      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*fs,y);
-      if(y>canvas.height&&Math.random()>0.975)drops[i]=0;
+      const a=Math.max(0.05,Math.min(0.6,1-(y/cv.height)));
+      ctx.fillStyle=`rgba(59,130,246,${a*0.7})`;
+      ctx.fillText(chars[Math.random()*chars.length|0],i*fs,y);
+      if(y>cv.height&&Math.random()>0.975)drops[i]=0;
       drops[i]+=0.4;
     }
   }
-  resize();window.addEventListener('resize',resize);setInterval(draw,50);
+  resize();addEventListener('resize',resize);setInterval(draw,50);
 })();
 
-// ── STATE
+// ── CONSTANTEN
 const EMOJIS=['🖥️','🐋','📦','🔒','📷','🎵','🎮','🌐','🔧','📊',
-              '💾','🗂️','🏠','🌿','🔗','🛡️','📡','⚙️','🚀','📺',
-              '🧪','🎛️','🔍','🗄️','🌍','🔑','💡','🧩','🤖','🖨️'];
+  '💾','🗂️','🏠','🌿','🔗','🛡️','📡','⚙️','🚀','📺',
+  '🧪','🎛️','🔍','🗄️','🌍','🔑','💡','🧩','🤖','🖨️'];
 
 const DEFAULTS={
   categories:[
-    {id:'infra',     name:'Infrastructuur',   color:'#3b82f6'},
-    {id:'media',     name:'Media & Bestanden', color:'#ef4444'},
-    {id:'netwerk',   name:'Netwerk',           color:'#06d6a0'},
-    {id:'monitoring',name:'Monitoring',        color:'#f59e0b'},
-    {id:'overig',    name:'Overig',            color:'#8b5cf6'},
+    {id:'infra',name:'Infrastructuur',color:'#3b82f6'},
+    {id:'media',name:'Media & Bestanden',color:'#ef4444'},
+    {id:'netwerk',name:'Netwerk',color:'#06d6a0'},
+    {id:'monitoring',name:'Monitoring',color:'#f59e0b'},
+    {id:'overig',name:'Overig',color:'#8b5cf6'},
   ],
   services:[
-    {id:'s1',name:'Proxmox VE',      url:'https://10.10.5.1:8006', desc:'Virtualisatie beheer',    cat:'infra',      icon:'🖥️',status:'online', tag:'Host'},
-    {id:'s2',name:'Nginx Proxy Mgr', url:'http://10.10.5.1:81',    desc:'Reverse proxy beheer',    cat:'netwerk',    icon:'🌐',status:'online', tag:'LXC'},
-    {id:'s3',name:'Immich',          url:'http://10.10.5.1:2283',  desc:'Foto & video bibliotheek',cat:'media',      icon:'📷',status:'online', tag:'LXC'},
-    {id:'s4',name:'Portainer',       url:'http://10.10.5.1:9000',  desc:'Docker container beheer', cat:'infra',      icon:'🐋',status:'online', tag:'LXC'},
-    {id:'s5',name:'Jellyfin',        url:'http://10.10.5.1:8096',  desc:'Media server',            cat:'media',      icon:'📺',status:'online', tag:'LXC'},
-    {id:'s6',name:'Cloudflared',     url:'http://10.10.5.1:14333', desc:'Zero Trust tunnel',       cat:'netwerk',    icon:'🛡️',status:'online', tag:'LXC'},
-    {id:'s7',name:'Uptime Kuma',     url:'http://10.10.5.1:3001',  desc:'Service monitoring',      cat:'monitoring', icon:'📊',status:'online', tag:'LXC'},
-    {id:'s8',name:'Home Assistant',  url:'http://10.10.5.1:8123',  desc:'Home automation',         cat:'overig',     icon:'🏠',status:'online', tag:'VM'},
+    {id:'s1',name:'Proxmox VE',url:'https://10.10.5.1:8006',desc:'Virtualisatie beheer',cat:'infra',icon:'🖥️',status:'online',tag:'Host'},
+    {id:'s2',name:'Nginx Proxy Mgr',url:'http://10.10.5.1:81',desc:'Reverse proxy beheer',cat:'netwerk',icon:'🌐',status:'online',tag:'LXC'},
+    {id:'s3',name:'Immich',url:'http://10.10.5.1:2283',desc:'Foto & video bibliotheek',cat:'media',icon:'📷',status:'online',tag:'LXC'},
+    {id:'s4',name:'Portainer',url:'http://10.10.5.1:9000',desc:'Docker container beheer',cat:'infra',icon:'🐋',status:'online',tag:'LXC'},
+    {id:'s5',name:'Jellyfin',url:'http://10.10.5.1:8096',desc:'Media server',cat:'media',icon:'📺',status:'online',tag:'LXC'},
+    {id:'s6',name:'Cloudflared',url:'http://10.10.5.1:14333',desc:'Zero Trust tunnel',cat:'netwerk',icon:'🛡️',status:'online',tag:'LXC'},
+    {id:'s7',name:'Uptime Kuma',url:'http://10.10.5.1:3001',desc:'Service monitoring',cat:'monitoring',icon:'📊',status:'online',tag:'LXC'},
+    {id:'s8',name:'Home Assistant',url:'http://10.10.5.1:8123',desc:'Home automation',cat:'overig',icon:'🏠',status:'online',tag:'VM'},
   ]
 };
 
-let state=(()=>{
-  try{const s=JSON.parse(localStorage.getItem('proxdash'));if(s?.categories&&s?.services)return s;}catch{}
-  return structuredClone(DEFAULTS);
+// ── STATE — laadt van server, valt terug op localStorage, dan defaults
+let state;
+(async()=>{
+  try{
+    const r=await fetch('/api/state');
+    if(r.ok){const d=await r.json();if(d?.categories&&d?.services){state=d;boot();return;}}
+  }catch{}
+  try{
+    const s=JSON.parse(localStorage.getItem('proxdash'));
+    if(s?.categories&&s?.services){state=s;boot();return;}
+  }catch{}
+  state=structuredClone(DEFAULTS);boot();
 })();
 
 let ctxTarget=null,editTarget=null,selectedEmoji='🖥️',editMode=false;
 
-function persist(){localStorage.setItem('proxdash',JSON.stringify(state));saveToFile();}
+// persist() wordt ALLEEN aangeroepen bij expliciet opslaan (niet bij elke blur)
+function persist(){
+  localStorage.setItem('proxdash',JSON.stringify(state));
+  saveToServer();
+}
+
+async function saveToServer(){
+  try{
+    await fetch('/api/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(state)
+    });
+  }catch{}
+}
+
+function boot(){render();tickClock();setInterval(tickClock,1000);}
 
 // ── RENDER
 function render(){
@@ -402,6 +412,8 @@ function render(){
   main.innerHTML='';
   for(const cat of state.categories){
     const services=state.services.filter(s=>s.cat===cat.id);
+    // Verberg lege categorieën in normale modus
+    if(!editMode && services.length===0) continue;
     const sec=document.createElement('div');
     sec.innerHTML=`
       <div class="section-header" style="--cat-color:${cat.color}">
@@ -415,42 +427,78 @@ function render(){
       <div class="card-grid" id="grid-${cat.id}"></div>`;
     main.appendChild(sec);
     const grid=sec.querySelector(`#grid-${cat.id}`);
-    for(const svc of services)grid.appendChild(makeCard(svc,cat.color));
+    for(const svc of services) grid.appendChild(makeCard(svc,cat.color));
     const add=document.createElement('button');
     add.className='add-card';
-    add.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Toevoegen</span>`;
+    add.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Toevoegen</span>';
     add.onclick=()=>openModal(null,cat.id);
     grid.appendChild(add);
   }
   updateStats();
-  if(editMode)applyEditMode(true);
+  if(editMode) applyEditMode(true);
 }
 
 function makeCard(svc,catColor){
   const card=document.createElement('a');
-  card.className='card';card.href=svc.url;card.target='_blank';card.rel='noopener noreferrer';
-  card.dataset.id=svc.id;card.dataset.name=svc.name.toLowerCase();card.dataset.desc=(svc.desc||'').toLowerCase();
+  card.className='card';
+  card.href=svc.url;
+  card.target='_blank';
+  card.rel='noopener noreferrer';
+  card.dataset.id=svc.id;
+  card.dataset.name=svc.name.toLowerCase();
+  card.dataset.desc=(svc.desc||'').toLowerCase();
   card.style.setProperty('--cat-color',catColor);
-  const stMap={online:{cls:'s-online',lbl:'Online'},offline:{cls:'s-offline',lbl:'Offline'},warning:{cls:'s-warning',lbl:'Onderhoud'}};
+
+  const stMap={
+    online:{cls:'s-online',lbl:'Online'},
+    offline:{cls:'s-offline',lbl:'Offline'},
+    warning:{cls:'s-warning',lbl:'Onderhoud'}
+  };
   const st=stMap[svc.status]||stMap.online;
   let host='';try{host=new URL(svc.url).host;}catch{}
+
+  // Laatste controle timestamp
+  let checkedStr='';
+  if(svc.lastChecked){
+    const diff=Math.round((Date.now()-svc.lastChecked)/60000);
+    checkedStr=diff<1?'zonet':diff===1?'1 min geleden':`${diff} min geleden`;
+  }
+
+  // Edit knop via dataset — geen inline JS met svc.id
+  const editBtn=document.createElement('button');
+  editBtn.className='card-edit-btn';
+  editBtn.title='Bewerken';
+  editBtn.textContent='✏️';
+  editBtn.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    openModal(state.services.find(s=>s.id===svc.id));
+  });
+
   card.innerHTML=`
-    <button class="card-edit-btn" title="Bewerken"
-      onclick="event.preventDefault();event.stopPropagation();openModal(state.services.find(s=>s.id==='${svc.id}'))">✏️</button>
     <div class="card-top">
       <div class="card-icon">${svc.icon}</div>
       <span class="status-pill ${st.cls}">${st.lbl}</span>
     </div>
     <input class="editable-name card-name" value="${esc(svc.name)}" readonly
-      onchange="renameService('${svc.id}',this.value)"
-      onblur="renameService('${svc.id}',this.value)"
+      data-id="${svc.id}"
       onclick="event.preventDefault();event.stopPropagation();"/>
     <div class="card-desc">${esc(svc.desc)}</div>
     <div class="card-footer">
       <span class="card-tag">${esc(svc.tag||'')}</span>
-      <span>${host}</span>
+      <span class="card-checked">${checkedStr?'✓ '+checkedStr:host}</span>
     </div>`;
-  card.addEventListener('contextmenu',e=>{e.preventDefault();showCtx(e.clientX,e.clientY,svc.id);});
+
+  card.prepend(editBtn);
+
+  // Rename: sla op in lokale state, GEEN persist() hier
+  card.querySelector('.editable-name').addEventListener('change',e=>{
+    const val=e.target.value.trim();
+    if(val){const s=state.services.find(s=>s.id===svc.id);if(s)s.name=val;}
+  });
+
+  card.addEventListener('contextmenu',e=>{
+    e.preventDefault();showCtx(e.clientX,e.clientY,svc.id);
+  });
   return card;
 }
 
@@ -458,16 +506,20 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 
 // ── STATS
 function updateStats(){
-  const total=state.services.length,online=state.services.filter(s=>s.status==='online').length;
+  const total=state.services.length;
+  const online=state.services.filter(s=>s.status==='online').length;
   document.getElementById('stat-total').textContent=`${total} services`;
   document.getElementById('stat-online').textContent=`${online} online`;
-  const now=new Date();
-  document.getElementById('stat-date').textContent=now.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('stat-date').textContent=new Date().toLocaleDateString('nl-NL',{
+    weekday:'short',day:'numeric',month:'short',year:'numeric'
+  });
 }
 
 // ── KLOK
 function tickClock(){
-  document.getElementById('clock').textContent=new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('nl-NL',{
+    hour:'2-digit',minute:'2-digit',second:'2-digit'
+  });
 }
 
 // ── ZOEKEN
@@ -478,33 +530,49 @@ function filterCards(q){
   });
 }
 
-// ── EDIT MODE
+// ── EDIT MODE — persist() alleen hier bij afsluiten
 function toggleEditMode(){
   editMode=!editMode;
   document.body.classList.toggle('edit-mode',editMode);
-  applyEditMode(editMode);
   const btn=document.getElementById('edit-mode-btn');
-  if(editMode){btn.innerHTML=btn.innerHTML.replace('Bewerken','Klaar');showToast('✏️ Bewerkingsmodus actief');}
-  else{btn.innerHTML=btn.innerHTML.replace('Klaar','Bewerken');persist();showToast('💾 Opgeslagen');}
+  if(editMode){
+    applyEditMode(true);
+    render(); // herrender om lege categorieën te tonen
+    btn.innerHTML=btn.innerHTML.replace('Bewerken','Klaar');
+    showToast('✏️ Bewerkingsmodus — druk E of klik Klaar om op te slaan');
+  }else{
+    applyEditMode(false);
+    persist(); // ENIGE plek buiten modal waar we opslaan
+    render(); // herrender om lege categorieën weer te verbergen
+    btn.innerHTML=btn.innerHTML.replace('Klaar','Bewerken');
+    showToast('💾 Opgeslagen');
+  }
 }
 
 function applyEditMode(active){
   document.querySelectorAll('.editable-name').forEach(i=>i.readOnly=!active);
   document.querySelectorAll('.edit-section-name').forEach(i=>i.readOnly=!active);
   document.querySelectorAll('a.card').forEach(card=>{
-    if(active){if(!card.dataset.href)card.dataset.href=card.getAttribute('href')||'';card.removeAttribute('href');}
-    else{if(card.dataset.href)card.setAttribute('href',card.dataset.href);}
+    if(active){
+      if(!card.dataset.href) card.dataset.href=card.getAttribute('href')||'';
+      card.removeAttribute('href');
+    }else{
+      if(card.dataset.href) card.setAttribute('href',card.dataset.href);
+    }
   });
 }
 
-function renameService(id,val){val=val.trim();if(!val)return;const s=state.services.find(s=>s.id===id);if(s)s.name=val;}
-function renameCategory(id,val){val=val.trim();if(!val)return;const c=state.categories.find(c=>c.id===id);if(c)c.name=val;}
+function renameCategory(id,val){
+  val=val.trim();if(!val)return;
+  const c=state.categories.find(c=>c.id===id);
+  if(c) c.name=val;
+}
 
-// ── ONLINE/OFFLINE CHECK
+// ── STATUS CHECK
 async function checkService(url){
   try{
     const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),3000);
+    const tid=setTimeout(()=>ctrl.abort(),4000);
     await fetch(url,{method:'GET',mode:'no-cors',signal:ctrl.signal,cache:'no-store'});
     clearTimeout(tid);return'online';
   }catch{return'offline';}
@@ -512,27 +580,26 @@ async function checkService(url){
 
 async function manualRefresh(){
   const btn=document.getElementById('refresh-btn');
-  btn.disabled=true;btn.innerHTML=btn.innerHTML.replace('Refresh','Bezig...');
+  btn.disabled=true;
+  btn.innerHTML=btn.innerHTML.replace('Refresh','Bezig...');
   let changed=false;
+  const now=Date.now();
   for(const svc of state.services){
-    if(svc.status==='warning')continue;
+    if(svc.status==='warning') continue;
     const next=await checkService(svc.url);
+    svc.lastChecked=now;
     if(next!==svc.status){svc.status=next;changed=true;}
   }
-  persist();if(changed)render();
-  btn.disabled=false;btn.innerHTML=btn.innerHTML.replace('Bezig...','Refresh');
+  persist();render();
+  btn.disabled=false;
+  btn.innerHTML=btn.innerHTML.replace('Bezig...','Refresh');
   showToast(changed?'🔄 Statussen bijgewerkt':'✅ Alles up-to-date');
-}
-
-// ── OPSLAAN NAAR BESTAND
-async function saveToFile(){
-  try{await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});}
-  catch{}
 }
 
 // ── MODAL
 function openModal(svc,defaultCat){
-  editTarget=svc?.id??null;const isEdit=!!svc;
+  editTarget=svc?.id??null;
+  const isEdit=!!svc;
   document.getElementById('modal-title').textContent=isEdit?'✏️ Service bewerken':'➕ Service toevoegen';
   document.getElementById('f-name').value=svc?.name||'';
   document.getElementById('f-url').value=svc?.url||'http://10.10.5.';
@@ -541,68 +608,100 @@ function openModal(svc,defaultCat){
   document.getElementById('f-status').value=svc?.status||'online';
   document.getElementById('delete-btn').style.display=isEdit?'':'none';
   document.getElementById('f-cat').innerHTML=state.categories
-    .map(c=>`<option value="${c.id}"${(svc?.cat||defaultCat)===c.id?' selected':''}>${c.name}</option>`).join('');
+    .map(c=>`<option value="${c.id}"${(svc?.cat||defaultCat)===c.id?' selected':''}>${esc(c.name)}</option>`).join('');
   selectedEmoji=svc?.icon||'🖥️';
   document.getElementById('emoji-grid').innerHTML=EMOJIS
-    .map(e=>`<button class="emoji-opt${e===selectedEmoji?' active':''}" onclick="pickEmoji(this,'${e}')">${e}</button>`).join('');
+    .map(e=>`<button class="emoji-opt${e===selectedEmoji?' active':''}" type="button">${e}</button>`).join('');
+  document.querySelectorAll('.emoji-opt').forEach(btn=>{
+    btn.addEventListener('click',()=>pickEmoji(btn,btn.textContent));
+  });
   document.getElementById('modal').classList.add('active');
   setTimeout(()=>document.getElementById('f-name').focus(),50);
 }
 
-function closeModal(){document.getElementById('modal').classList.remove('active');editTarget=null;}
-function pickEmoji(btn,e){selectedEmoji=e;document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function closeModal(){
+  document.getElementById('modal').classList.remove('active');
+  editTarget=null;
+}
+
+function pickEmoji(btn,e){
+  selectedEmoji=e;
+  document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
 function saveService(){
   const name=document.getElementById('f-name').value.trim();
   const url=document.getElementById('f-url').value.trim();
   if(!name||!url){showToast('⚠️ Naam en URL zijn verplicht');return;}
-  const svc={id:editTarget||('s'+Date.now()),name,url,
+  const svc={
+    id:editTarget||('s'+Date.now()),
+    name,url,
     desc:document.getElementById('f-desc').value.trim(),
     cat:document.getElementById('f-cat').value,
     status:document.getElementById('f-status').value,
     tag:document.getElementById('f-tag').value.trim(),
-    icon:selectedEmoji};
-  if(editTarget){const i=state.services.findIndex(s=>s.id===editTarget);if(i>=0)state.services[i]=svc;}
-  else state.services.push(svc);
+    icon:selectedEmoji,
+    lastChecked:editTarget?(state.services.find(s=>s.id===editTarget)?.lastChecked||null):null
+  };
+  if(editTarget){
+    const i=state.services.findIndex(s=>s.id===editTarget);
+    if(i>=0) state.services[i]=svc;
+  }else{
+    state.services.push(svc);
+  }
   persist();render();closeModal();showToast('✅ Opgeslagen');
 }
 
 function confirmDelete(){
-  if(!editTarget)return;
+  if(!editTarget) return;
   state.services=state.services.filter(s=>s.id!==editTarget);
   persist();render();closeModal();showToast('🗑️ Verwijderd');
 }
 
 // ── CONTEXT MENU
 function showCtx(x,y,id){
-  ctxTarget=id;const menu=document.getElementById('ctx-menu');
-  menu.style.cssText=`left:${Math.min(x,window.innerWidth-180)}px;top:${Math.min(y,window.innerHeight-120)}px`;
+  ctxTarget=id;
+  const menu=document.getElementById('ctx-menu');
+  const mx=Math.min(x,innerWidth-180);
+  const my=Math.min(y,innerHeight-120);
+  menu.style.cssText=`left:${mx}px;top:${my}px`;
   menu.classList.add('active');
 }
 function hideCtx(){document.getElementById('ctx-menu').classList.remove('active');}
 function ctxEdit(){const s=state.services.find(s=>s.id===ctxTarget);if(s)openModal(s);hideCtx();}
 function ctxOpen(){const s=state.services.find(s=>s.id===ctxTarget);if(s)window.open(s.url,'_blank');hideCtx();}
-function ctxDelete(){if(!ctxTarget)return;state.services=state.services.filter(s=>s.id!==ctxTarget);persist();render();hideCtx();showToast('🗑️ Verwijderd');}
-
-// ── TOAST
-let toastTimer;
-function showToast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+function ctxDelete(){
+  if(!ctxTarget) return;
+  state.services=state.services.filter(s=>s.id!==ctxTarget);
+  persist();render();hideCtx();showToast('🗑️ Verwijderd');
 }
 
-// ── EVENTS
+// ── TOAST
+let _toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── KEYBOARD
 document.addEventListener('click',e=>{
-  if(!e.target.closest('#ctx-menu'))hideCtx();
-  if(e.target===document.getElementById('modal'))closeModal();
+  if(!e.target.closest('#ctx-menu')) hideCtx();
+  if(e.target===document.getElementById('modal')) closeModal();
 });
 document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  const typing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
   if(e.key==='Escape'){closeModal();hideCtx();if(editMode)toggleEditMode();}
-  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();const s=document.getElementById('search-input');s.focus();s.select();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){
+    e.preventDefault();
+    const s=document.getElementById('search-input');s.focus();s.select();
+  }
+  // E shortcut — alleen als je niet aan het typen bent
+  if(e.key==='e'&&!typing&&!e.metaKey&&!e.ctrlKey) toggleEditMode();
 });
-
-// ── INIT
-render();tickClock();setInterval(tickClock,1000);
 </script>
 </body>
 </html>
