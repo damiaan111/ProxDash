@@ -6,6 +6,18 @@
 #  Gebruik:  bash -c "$(curl -fsSL https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/ct/homelab-dashboard.sh)"
 #  Vereist:  Proxmox VE 7+ host, root rechten
 # ============================================================
+
+# ── Wanneer het script via curl pipe wordt uitgevoerd heeft het geen echte stdin.
+#    We downloaden het script dan naar /tmp en herstart het interactief
+#    zodat read-commando's gewoon werken — precies zoals community-scripts dat doet.
+if [[ ! -t 0 ]]; then
+  SCRIPT_URL="https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/ct/homelab-dashboard.sh"
+  TMP_SCRIPT=$(mktemp /tmp/proxdash-install-XXXX.sh)
+  curl -fsSL "$SCRIPT_URL" -o "$TMP_SCRIPT"
+  chmod +x "$TMP_SCRIPT"
+  exec bash "$TMP_SCRIPT" </dev/tty
+fi
+
 set -euo pipefail
 
 # ── Kleuren
@@ -17,19 +29,19 @@ msg_info()  { echo -e " ${BL}[INFO]${CL}  $*"; }
 msg_ok()    { echo -e " ${GN}[ OK ]${CL}  $*"; }
 msg_error() { echo -e " ${RD}[ERR ]${CL}  $*" >&2; exit 1; }
 
-# Vraag met standaardwaarde: ask "Vraag" "standaard" -> geeft invoer of standaard terug
+# Vraag met standaardwaarde
 ask() {
   local prompt="$1" default="$2" input
   echo -en " ${YW}▶${CL}  ${BOLD}${prompt}${CL} ${DIM}[${default}]${CL}: "
-  read -r input
+  read -r input </dev/tty
   echo "${input:-$default}"
 }
 
-# Ja/nee vraag: confirm "Vraag" -> 0=ja, 1=nee
+# Ja/nee vraag
 confirm() {
   local prompt="$1" input
   echo -en " ${YW}▶${CL}  ${BOLD}${prompt}${CL} ${DIM}[j/N]${CL}: "
-  read -r input
+  read -r input </dev/tty
   [[ "${input,,}" =~ ^(j|ja|y|yes)$ ]]
 }
 
@@ -52,53 +64,49 @@ echo ""
 command -v pct   &>/dev/null || msg_error "pct niet gevonden — is dit een Proxmox host?"
 command -v pvesm &>/dev/null || msg_error "pvesm niet gevonden — is dit een Proxmox host?"
 
-# ── Detecteer beschikbare storage pools (alle actieve)
+# ── Detecteer beschikbare storage pools
 mapfile -t STORAGE_LIST < <(pvesm status | awk 'NR>1 && $3=="active" {print $1}')
 [[ ${#STORAGE_LIST[@]} -eq 0 ]] && msg_error "Geen actieve storage gevonden — controleer: pvesm status"
 
-# Gebruik 'local-lvm' als default als die bestaat, anders de eerste actieve
 DEFAULT_STORAGE="${STORAGE_LIST[0]}"
 for s in "${STORAGE_LIST[@]}"; do
   [[ "$s" == "local-lvm" ]] && DEFAULT_STORAGE="local-lvm" && break
 done
 
-# ── Detecteer bridges
-mapfile -t BRIDGE_LIST < <(ip link show | awk -F': ' '/^[0-9]+: vmbr/{print $2}')
+# ── Detecteer netwerk bridges
+mapfile -t BRIDGE_LIST < <(ip link show | awk -F': ' '/^[0-9]+: vmbr/{print $2}' | tr -d ' ')
 DEFAULT_BRIDGE="${BRIDGE_LIST[0]:-vmbr0}"
 
 # ── Setup wizard
-echo -e " ${BOLD}Configureer je container — druk Enter om de standaardwaarde te gebruiken${CL}"
+echo -e " ${BOLD}Configureer je container${CL} — druk Enter om de standaardwaarde te gebruiken"
 echo -e " ${DIM}──────────────────────────────────────────────────${CL}"
 echo ""
 
 DEFAULT_CT_ID=$(pvesh get /cluster/nextid 2>/dev/null || echo "200")
 
-CT_ID=$(ask   "Container ID"          "$DEFAULT_CT_ID")
-HOSTNAME=$(ask "Hostname"              "proxdash")
+CT_ID=$(ask      "Container ID"                   "$DEFAULT_CT_ID")
+HOSTNAME=$(ask   "Hostname"                        "proxdash")
 
-# Storage kiezen
-echo -e " ${DIM}Beschikbare storage: ${STORAGE_LIST[*]}${CL}"
-STORAGE=$(ask  "Storage pool"          "$DEFAULT_STORAGE")
+echo -e "         ${DIM}Beschikbare storage: ${STORAGE_LIST[*]}${CL}"
+STORAGE=$(ask    "Storage pool"                    "$DEFAULT_STORAGE")
 
-# Valideer storage keuze
-VALID_STORAGE=false
-for s in "${STORAGE_LIST[@]}"; do [[ "$s" == "$STORAGE" ]] && VALID_STORAGE=true && break; done
-[[ "$VALID_STORAGE" == false ]] && msg_error "Storage '${STORAGE}' niet gevonden. Kies uit: ${STORAGE_LIST[*]}"
+# Valideer storage
+VALID=false
+for s in "${STORAGE_LIST[@]}"; do [[ "$s" == "$STORAGE" ]] && VALID=true && break; done
+[[ "$VALID" == false ]] && msg_error "Storage '${STORAGE}' niet gevonden. Kies uit: ${STORAGE_LIST[*]}"
 
-DISK=$(ask     "Disk grootte (GB)"     "4")
-MEMORY=$(ask   "RAM (MB)"             "256")
-SWAP=$(ask     "Swap (MB)"            "256")
-CORES=$(ask    "CPU cores"            "1")
+DISK=$(ask       "Disk grootte (GB)"               "4")
+MEMORY=$(ask     "RAM (MB)"                        "256")
+SWAP=$(ask       "Swap (MB)"                       "256")
+CORES=$(ask      "CPU cores"                       "1")
 
-# Bridge kiezen
-[[ ${#BRIDGE_LIST[@]} -gt 0 ]] && echo -e " ${DIM}Gevonden bridges: ${BRIDGE_LIST[*]}${CL}"
-BRIDGE=$(ask   "Netwerk bridge"       "$DEFAULT_BRIDGE")
+echo -e "         ${DIM}Gevonden bridges: ${BRIDGE_LIST[*]:-vmbr0}${CL}"
+BRIDGE=$(ask     "Netwerk bridge"                  "$DEFAULT_BRIDGE")
 
-# IP configuratie
 echo ""
 if confirm "Statisch IP instellen? (anders DHCP)"; then
-  IP_ADDR=$(ask "IP-adres (CIDR, bijv. 192.168.1.50/24)" "")
-  GATEWAY=$(ask "Gateway (bijv. 192.168.1.1)"            "")
+  IP_ADDR=$(ask  "IP-adres met subnet (bijv. 192.168.1.50/24)" "")
+  GATEWAY=$(ask  "Gateway (bijv. 192.168.1.1)"                 "")
   [[ -z "$IP_ADDR" || -z "$GATEWAY" ]] && msg_error "IP-adres en gateway zijn verplicht bij statisch IP"
   NET_CONFIG="name=eth0,bridge=${BRIDGE},ip=${IP_ADDR},gw=${GATEWAY}"
   STATIC_IP="${IP_ADDR%%/*}"
@@ -107,19 +115,22 @@ else
   STATIC_IP=""
 fi
 
+# ── Overzicht
 echo ""
 echo -e " ${BOLD}Overzicht${CL}"
 echo -e " ${DIM}──────────────────────────────────────────────────${CL}"
 msg_info "Container ID  : ${BOLD}${CT_ID}${CL}"
 msg_info "Hostname      : ${BOLD}${HOSTNAME}${CL}"
+msg_info "OS            : ${BOLD}Debian 12${CL}"
 msg_info "Storage       : ${BOLD}${STORAGE}${CL}"
 msg_info "Disk          : ${BOLD}${DISK} GB${CL}"
 msg_info "RAM / Swap    : ${BOLD}${MEMORY} MB / ${SWAP} MB${CL}"
 msg_info "CPU cores     : ${BOLD}${CORES}${CL}"
-msg_info "Netwerk       : ${BOLD}${NET_CONFIG}${CL}"
+msg_info "Bridge        : ${BOLD}${BRIDGE}${CL}"
+msg_info "IP            : ${BOLD}${STATIC_IP:-DHCP}${CL}"
 echo ""
 
-confirm "Doorgaan met installatie?" || { echo " Geannuleerd."; exit 0; }
+confirm "Doorgaan met installatie?" || { echo -e "\n Geannuleerd."; exit 0; }
 echo ""
 
 # ── Constanten
@@ -127,13 +138,13 @@ OS_TEMPLATE="debian-12-standard_12.7-1_amd64.tar.zst"
 INSTALL_URL="https://raw.githubusercontent.com/damiaan111/ProxDash/main/homelab-dashboard/main/install/homelab-dashboard-install.sh"
 PORT=7575
 
-# ── Template downloaden
+# ── Template
 TEMPLATE_PATH="/var/lib/vz/template/cache/${OS_TEMPLATE}"
 if [[ ! -f "$TEMPLATE_PATH" ]]; then
   msg_info "Debian 12 template downloaden..."
   pveam update >/dev/null 2>&1
   pveam download local "$OS_TEMPLATE" >/dev/null 2>&1 \
-    || msg_error "Download mislukt — controleer: pveam available --section system"
+    || msg_error "Template download mislukt — controleer: pveam available --section system"
   msg_ok "Template gedownload"
 else
   msg_ok "Template al aanwezig"
@@ -163,8 +174,6 @@ for i in {1..25}; do
   [[ -n "$FINAL_IP" ]] && break
   sleep 2
 done
-
-# Bij statisch IP: gebruik het ingestelde adres als fallback
 [[ -z "$FINAL_IP" && -n "$STATIC_IP" ]] && FINAL_IP="$STATIC_IP"
 [[ -z "$FINAL_IP" ]] && msg_error "Container kreeg geen IP — controleer bridge ${BRIDGE} en DHCP"
 msg_ok "IP-adres: ${BOLD}${FINAL_IP}${CL}"
@@ -177,7 +186,10 @@ msg_ok "Installatie voltooid"
 # ── Klaar
 echo ""
 echo -e " ${GN}${BOLD}✅ ProxDash is succesvol geïnstalleerd!${CL}"
-echo -e " ${BL}🌐 Open in je browser:${CL}  ${GN}${BOLD}http://${FINAL_IP}:${PORT}${CL}"
-echo -e " ${YW}📦 Container ID : ${CT_ID}${CL}"
-echo -e " ${YW}🖥️  Beheer via   : Proxmox GUI → CT ${CT_ID}${CL}"
+echo -e " ${BL}🌐 Open in je browser :${CL}  ${GN}${BOLD}http://${FINAL_IP}:${PORT}${CL}"
+echo -e " ${YW}📦 Container ID       : ${CT_ID}${CL}"
+echo -e " ${YW}🖥️  Beheer via         : Proxmox GUI → CT ${CT_ID}${CL}"
 echo ""
+
+# ── Opruimen
+rm -f "$0"
