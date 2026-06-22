@@ -1,1178 +1,608 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="nl" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HomeLab Dashboard</title>
+  <title>ProxDash — HomeLab Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --accent: #6c63ff;
-      --accent2: #00d4aa;
-      --accent3: #ff6b6b;
-      --accent4: #ffd166;
-      --text: #e2e8f0;
-      --text-muted: #7c8db5;
-      --border: #2d3250;
-      --online: #00d4aa;
-      --offline: #ff6b6b;
-      --warning: #ffd166;
-      --radius: 12px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --bg:           #0a0c10;
+      --surface:      #111318;
+      --surface2:     #181b22;
+      --surface3:     #1e2230;
+      --border:       rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      --text:         #e2e6f0;
+      --text-muted:   #6b7280;
+      --text-faint:   #3d4350;
+      --accent:       #3b82f6;
+      --accent-glow:  rgba(59,130,246,0.25);
+      --accent2:      #06d6a0;
+      --accent2-glow: rgba(6,214,160,0.2);
+      --danger:       #ef4444;
+      --warning:      #f59e0b;
+      --online:       #06d6a0;
+      --offline:      #ef4444;
+      --radius-sm:    6px;
+      --radius:       10px;
+      --radius-lg:    14px;
+      --transition:   180ms cubic-bezier(0.16,1,0.3,1);
+      --font-body:    'Inter', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+      --space-1:.25rem;--space-2:.5rem;--space-3:.75rem;
+      --space-4:1rem;--space-6:1.5rem;--space-8:2rem;
+      --text-xs:clamp(0.75rem,0.7rem + 0.25vw,0.875rem);
+      --text-sm:clamp(0.8rem,0.75rem + 0.3vw,0.95rem);
+      --text-base:clamp(0.9rem,0.85rem + 0.25vw,1rem);
+      --text-lg:clamp(1rem,0.9rem + 0.5vw,1.2rem);
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-    }
-
-    /* ── TOP BAR ── */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    #clock {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-    }
-
-    #search-input {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.4rem 0.9rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      width: 200px;
-      outline: none;
-      transition: border-color 0.2s, width 0.3s;
-    }
-
-    #search-input:focus {
-      border-color: var(--accent);
-      width: 260px;
-    }
-
-    /* ── STATS BAR ── */
-    .stats-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0.6rem 2rem;
-      display: flex;
-      gap: 2rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      flex-wrap: wrap;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .stat-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--online);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* ── MAIN LAYOUT ── */
-    main {
-      padding: 2rem;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    /* ── SECTION HEADERS ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 2rem 0 1rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-    }
-
-    .section-header::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* ── CARD GRID ── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.2rem;
-      cursor: pointer;
-      transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--card-color, var(--accent));
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      border-color: var(--card-color, var(--accent));
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    }
-
-    .card:hover::before {
-      opacity: 1;
-    }
-
-    .card-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-    }
-
-    .card-icon {
-      width: 42px; height: 42px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
-      background: var(--surface2);
-      flex-shrink: 0;
-    }
-
-    .status-badge {
-      font-size: 0.65rem;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .status-online { background: rgba(0,212,170,0.15); color: var(--online); }
-    .status-offline { background: rgba(255,107,107,0.15); color: var(--offline); }
-    .status-warning { background: rgba(255,209,102,0.15); color: var(--warning); }
-
-    .card-name {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .card-desc {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .card-meta {
-      margin-top: auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .card-tag {
-      background: var(--surface2);
-      padding: 2px 7px;
-      border-radius: 4px;
-    }
-
-    /* ── HIDDEN / SEARCH FILTER ── */
-    .card.hidden { display: none; }
-
-    /* ── ADD CARD BUTTON ── */
-    .add-card {
-      background: transparent;
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 1.2rem;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 0.4rem;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      min-height: 120px;
-    }
-
-    .add-card:hover {
-      border-color: var(--accent);
-      background: rgba(108,99,255,0.05);
-      color: var(--accent);
-    }
-
-    /* ── MODAL ── */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(4px);
-    }
-
-    .modal-overlay.active { display: flex; }
-
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      width: 90%;
-      max-width: 480px;
-      box-shadow: var(--shadow);
-    }
-
-    .modal h2 {
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 0.4rem;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.6rem 0.9rem;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      outline: none;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: var(--accent);
-    }
-
-    .form-group select option {
-      background: var(--surface);
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 0.75rem;
-      justify-content: flex-end;
-      margin-top: 1.5rem;
-    }
-
-    .btn {
-      padding: 0.55rem 1.2rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-
-    .btn:hover { opacity: 0.85; }
-    .btn:active { transform: scale(0.97); }
-
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-danger { background: var(--accent3); color: #fff; }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-    }
-
-    /* ── EMOJI PICKER ── */
-    .emoji-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 0.5rem;
-    }
-
-    .emoji-btn {
-      width: 34px; height: 34px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.15s, transform 0.1s;
-    }
-
-    .emoji-btn:hover { background: var(--border); transform: scale(1.15); }
-    .emoji-btn.selected { border-color: var(--accent); background: rgba(108,99,255,0.2); }
-
-    /* ── CONTEXT MENU ── */
-    .ctx-menu {
-      display: none;
-      position: fixed;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.4rem 0;
-      min-width: 150px;
-      z-index: 300;
-      box-shadow: var(--shadow);
-    }
-
-    .ctx-menu.active { display: block; }
-
-    .ctx-item {
-      padding: 0.5rem 1rem;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: background 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .ctx-item:hover { background: var(--surface2); }
-    .ctx-item.danger { color: var(--accent3); }
-
-    /* ── TOAST ── */
-    #toast {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.7rem 1.2rem;
-      font-size: 0.85rem;
-      transform: translateY(80px);
-      opacity: 0;
-      transition: transform 0.3s, opacity 0.3s;
-      z-index: 400;
-    }
-
-    #toast.show { transform: translateY(0); opacity: 1; }
-
-
-    header .btn {
-      padding: 0.35rem 0.85rem;
-      font-size: 0.78rem;
-      border-radius: 6px;
-    }
-
-
-    /* ── EDIT MODE ── */
-    body.edit-mode #edit-mode-btn {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
-    .edit-mode .card {
-      cursor: default;
-    }
-
-    .editable-name {
-      background: none;
-      border: none;
-      color: var(--text);
-      font-size: inherit;
-      font-weight: inherit;
-      font-family: inherit;
-      padding: 2px 4px;
-      border-radius: 4px;
-      width: 100%;
-      outline: none;
-      pointer-events: none;
-    }
-
-    .edit-mode .editable-name {
-      pointer-events: all;
-      background: var(--surface2);
-      border: 1px solid var(--accent);
-      cursor: text;
-    }
-
-    .editable-name:focus {
-      border-color: var(--accent2);
-      box-shadow: 0 0 0 2px rgba(0,212,170,0.2);
-    }
-
-    .edit-section-name {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      font-family: inherit;
-      padding: 2px 6px;
-      border-radius: 4px;
-      outline: none;
-      pointer-events: none;
-      width: auto;
-      min-width: 80px;
-    }
-
-    .edit-mode .edit-section-name {
-      pointer-events: all;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      cursor: text;
-    }
-
-    .edit-mode .edit-section-name:focus {
-      border-color: var(--accent);
-    }
-
-    /* Verberg add-card en card-links in edit mode */
-    .edit-mode .add-card {
-      display: none;
-    }
-
-    .edit-mode .card {
-      pointer-events: all;
-    }
-
-    .edit-mode a.card {
-      text-decoration: none;
-      cursor: default;
-    }
-
-    /* Edit overlay op kaart in bewerkingsmodus */
-    .card-edit-overlay {
-      display: none;
-      position: absolute;
-      top: 6px; right: 6px;
-      background: var(--accent);
-      border-radius: 6px;
-      width: 24px; height: 24px;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      cursor: pointer;
-      z-index: 10;
-    }
-
-    .edit-mode .card-edit-overlay {
-      display: flex;
-    }
-
-    .edit-save-bar {
-      display: none;
-      position: fixed;
-      bottom: 1.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent);
-      color: #fff;
-      padding: 0.7rem 2rem;
-      border-radius: 30px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      z-index: 500;
-      box-shadow: 0 4px 20px rgba(108,99,255,0.5);
-      gap: 10px;
-      align-items: center;
-      transition: opacity 0.2s;
-    }
-
-    .edit-mode .edit-save-bar {
-      display: flex;
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      main { padding: 1rem; }
-      header { padding: 0 1rem; }
-      .stats-bar { padding: 0.5rem 1rem; }
-      #search-input { width: 140px; }
-      #search-input:focus { width: 180px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:var(--text-base);min-height:100vh;overflow-x:hidden}
+    a{color:inherit;text-decoration:none}
+    button,input,select,textarea{font:inherit;color:inherit}
+    button{cursor:pointer;background:none;border:none}
+    :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:var(--radius-sm)}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+    #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35}
+    .bg-overlay{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(59,130,246,.06) 0%,transparent 60%),
+                 radial-gradient(ellipse 60% 40% at 80% 80%,rgba(6,214,160,.05) 0%,transparent 60%)}
+
+    header{position:sticky;top:0;z-index:100;height:56px;padding:0 var(--space-6);
+      background:rgba(10,12,16,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border-bottom:1px solid var(--border);display:flex;align-items:center;
+      justify-content:space-between;gap:var(--space-4)}
+    .logo{display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-lg);
+      font-weight:700;letter-spacing:-.3px;flex-shrink:0}
+    .logo-sub{font-size:var(--text-xs);font-family:var(--font-mono);color:var(--text-muted);font-weight:400;margin-left:2px}
+    .header-center{flex:1;max-width:320px}
+    .search-wrap{position:relative}
+    .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+      color:var(--text-muted);font-size:13px;pointer-events:none}
+    #search-input{width:100%;background:var(--surface2);border:1px solid var(--border);
+      border-radius:var(--radius);padding:.4rem .75rem .4rem 2rem;font-size:var(--text-sm);
+      color:var(--text);transition:border-color var(--transition),box-shadow var(--transition);outline:none}
+    #search-input::placeholder{color:var(--text-muted)}
+    #search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+    .header-right{display:flex;align-items:center;gap:var(--space-2);flex-shrink:0}
+    #clock{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted);
+      letter-spacing:.5px;min-width:70px;text-align:right}
+
+    .stats-bar{position:sticky;top:56px;z-index:99;background:rgba(10,12,16,.8);
+      backdrop-filter:blur(8px);border-bottom:1px solid var(--border);
+      padding:var(--space-2) var(--space-6);display:flex;align-items:center;
+      gap:var(--space-6);font-size:var(--text-xs);color:var(--text-muted);font-family:var(--font-mono)}
+    .stat{display:flex;align-items:center;gap:var(--space-2)}
+    .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--online);flex-shrink:0;
+      animation:pulse-anim 2s ease-in-out infinite}
+    @keyframes pulse-anim{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--accent2-glow)}50%{opacity:.6;box-shadow:0 0 0 4px transparent}}
+
+    main{position:relative;z-index:1;padding:var(--space-6);max-width:1600px;margin:0 auto}
+
+    .section-header{display:flex;align-items:center;gap:var(--space-3);margin:var(--space-8) 0 var(--space-4)}
+    .section-line{flex:1;height:1px;background:var(--border)}
+    .section-dot{width:6px;height:6px;border-radius:50%;background:var(--cat-color,var(--accent));flex-shrink:0}
+
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--space-3)}
+
+    a.card{display:flex;flex-direction:column;gap:var(--space-3);background:var(--surface);
+      border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4);
+      position:relative;overflow:hidden;
+      transition:transform var(--transition),border-color var(--transition),box-shadow var(--transition)}
+    a.card::before{content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,var(--cat-color,var(--accent)) 0%,transparent 60%);
+      opacity:0;transition:opacity var(--transition);pointer-events:none}
+    a.card:hover{transform:translateY(-2px);border-color:var(--border-hover);
+      box-shadow:0 8px 24px rgba(0,0,0,.4),0 0 0 1px var(--border-hover)}
+    a.card:hover::before{opacity:.04}
+    .card-top{display:flex;align-items:flex-start;justify-content:space-between}
+    .card-icon{width:38px;height:38px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
+      font-size:1.15rem;flex-shrink:0}
+    .status-pill{font-size:10px;font-weight:600;font-family:var(--font-mono);letter-spacing:.5px;
+      padding:3px 8px;border-radius:var(--radius-sm);text-transform:uppercase}
+    .s-online {background:rgba(6,214,160,.12);color:var(--online)}
+    .s-offline{background:rgba(239,68,68,.12);color:var(--offline)}
+    .s-warning{background:rgba(245,158,11,.12);color:var(--warning)}
+    .card-name{font-size:var(--text-sm);font-weight:600;color:var(--text);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .card-desc{font-size:var(--text-xs);color:var(--text-muted);line-height:1.4;flex:1}
+    .card-footer{display:flex;align-items:center;justify-content:space-between;
+      padding-top:var(--space-3);border-top:1px solid var(--border);
+      font-size:10px;font-family:var(--font-mono);color:var(--text-faint)}
+    .card-tag{background:var(--surface2);border:1px solid var(--border);
+      padding:1px 6px;border-radius:4px;color:var(--text-muted)}
+    a.card.hidden{display:none}
+
+    .add-card{background:transparent;border:1px dashed var(--border);border-radius:var(--radius-lg);
+      min-height:120px;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:var(--space-2);cursor:pointer;
+      color:var(--text-faint);font-size:var(--text-xs);
+      transition:border-color var(--transition),color var(--transition),background var(--transition)}
+    .add-card:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,.04)}
+
+    .btn{display:inline-flex;align-items:center;gap:var(--space-2);padding:.38rem .85rem;
+      border-radius:var(--radius);font-size:var(--text-sm);font-weight:500;white-space:nowrap;
+      transition:background var(--transition),border-color var(--transition),opacity var(--transition),box-shadow var(--transition)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+    .btn-ghost:hover:not(:disabled){background:var(--surface2);color:var(--text);border-color:var(--border-hover)}
+    .btn-primary{background:var(--accent);border:1px solid transparent;color:#fff}
+    .btn-primary:hover:not(:disabled){opacity:.85;box-shadow:0 0 12px var(--accent-glow)}
+    .btn-danger{background:var(--danger);border:1px solid transparent;color:#fff}
+    .btn-danger:hover:not(:disabled){opacity:.85}
+    body.edit-mode #edit-mode-btn{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 0 10px var(--accent-glow)}
+
+    .editable-name{background:none;border:1px solid transparent;color:var(--text);
+      font-size:var(--text-sm);font-weight:600;font-family:var(--font-body);
+      padding:2px 4px;border-radius:4px;width:100%;outline:none;pointer-events:none;
+      transition:border-color var(--transition),background var(--transition)}
+    .edit-mode .editable-name{pointer-events:all;background:var(--surface2);border-color:var(--border-hover);cursor:text}
+    .editable-name:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+    .edit-section-name{background:none;border:1px solid transparent;color:var(--text-muted);
+      font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+      font-family:var(--font-body);padding:2px 6px;border-radius:4px;outline:none;
+      pointer-events:none;min-width:60px;
+      transition:border-color var(--transition),background var(--transition)}
+    .edit-mode .edit-section-name{pointer-events:all;background:var(--surface2);border-color:var(--border-hover);cursor:text}
+    .edit-mode .add-card{display:none}
+    .card-edit-btn{display:none;position:absolute;top:var(--space-2);right:var(--space-2);
+      width:24px;height:24px;background:var(--accent);border-radius:var(--radius-sm);
+      align-items:center;justify-content:center;font-size:11px;cursor:pointer;z-index:10;border:none;color:#fff}
+    .edit-mode .card-edit-btn{display:flex}
+    .edit-save-bar{display:none;position:fixed;bottom:var(--space-6);left:50%;transform:translateX(-50%);
+      background:var(--accent);color:#fff;padding:.65rem var(--space-6);border-radius:999px;
+      font-size:var(--text-sm);font-weight:600;cursor:pointer;z-index:500;
+      box-shadow:0 4px 24px var(--accent-glow);gap:var(--space-2);align-items:center;
+      white-space:nowrap;border:none;
+      transition:opacity var(--transition),transform var(--transition)}
+    .edit-save-bar:hover{opacity:.9;transform:translateX(-50%) scale(1.02)}
+    .edit-mode .edit-save-bar{display:flex}
+
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center;padding:var(--space-4)}
+    .overlay.active{display:flex}
+    .modal{background:var(--surface);border:1px solid var(--border-hover);border-radius:var(--radius-lg);
+      padding:var(--space-6);width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,.6);
+      animation:modal-in .2s cubic-bezier(.16,1,.3,1)}
+    @keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .modal-title{font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-6);display:flex;align-items:center;gap:var(--space-2)}
+    .form-group{margin-bottom:var(--space-4)}
+    .form-label{display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.8px;margin-bottom:var(--space-2)}
+    .form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);
+      border-radius:var(--radius);padding:.55rem .75rem;font-size:var(--text-sm);color:var(--text);
+      outline:none;transition:border-color var(--transition),box-shadow var(--transition)}
+    .form-input::placeholder{color:var(--text-faint)}
+    .form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+    .form-select option{background:var(--surface)}
+    .emoji-grid{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)}
+    .emoji-opt{width:32px;height:32px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);cursor:pointer;font-size:1rem;display:flex;
+      align-items:center;justify-content:center;
+      transition:transform var(--transition),border-color var(--transition),background var(--transition)}
+    .emoji-opt:hover{transform:scale(1.15);border-color:var(--border-hover)}
+    .emoji-opt.active{border-color:var(--accent);background:rgba(59,130,246,.15)}
+    .modal-actions{display:flex;gap:var(--space-2);justify-content:flex-end;margin-top:var(--space-6);flex-wrap:wrap}
+
+    #ctx-menu{display:none;position:fixed;background:var(--surface);border:1px solid var(--border-hover);
+      border-radius:var(--radius);padding:var(--space-2) 0;min-width:160px;z-index:300;
+      box-shadow:0 8px 32px rgba(0,0,0,.5);animation:ctx-in .12s ease}
+    @keyframes ctx-in{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    #ctx-menu.active{display:block}
+    .ctx-item{padding:.45rem var(--space-4);font-size:var(--text-sm);cursor:pointer;
+      display:flex;align-items:center;gap:var(--space-2);transition:background var(--transition)}
+    .ctx-item:hover{background:var(--surface2)}
+    .ctx-item.danger{color:var(--danger)}
+    .ctx-sep{height:1px;background:var(--border);margin:var(--space-2) 0}
+
+    #toast{position:fixed;bottom:var(--space-6);right:var(--space-6);background:var(--surface);
+      border:1px solid var(--border-hover);border-radius:var(--radius);padding:.6rem var(--space-4);
+      font-size:var(--text-sm);z-index:400;transform:translateY(80px);opacity:0;
+      transition:transform .3s cubic-bezier(.16,1,.3,1),opacity .3s ease;
+      box-shadow:0 4px 16px rgba(0,0,0,.4);pointer-events:none}
+    #toast.show{transform:translateY(0);opacity:1}
+
+    @media(max-width:640px){
+      header{padding:0 var(--space-4);gap:var(--space-2)}
+      main{padding:var(--space-4)}
+      .stats-bar{padding:var(--space-2) var(--space-4);gap:var(--space-4)}
+      .logo-sub,#clock{display:none}
+      .header-center{max-width:160px}
     }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
+<canvas id="bg-canvas"></canvas>
+<div class="bg-overlay"></div>
+
 <header>
   <div class="logo">
-    <div class="logo-icon">🏠</div>
-    <span>HomeLab</span>
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="ProxDash logo">
+      <rect width="28" height="28" rx="7" fill="url(#lg)"/>
+      <path d="M7 10h4v8H7zM12 7h4v11h-4zM17 12h4v6h-4z" fill="white" opacity="0.9"/>
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="28" y2="28">
+        <stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#06d6a0"/>
+      </linearGradient></defs>
+    </svg>
+    <span>ProxDash</span>
+    <span class="logo-sub">homelab</span>
+  </div>
+  <div class="header-center">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="Zoeken...  ⌘K"
+        oninput="filterCards(this.value)" autocomplete="off" />
+    </div>
   </div>
   <div class="header-right">
-    <input type="text" id="search-input" placeholder="🔍  Zoeken..." oninput="filterCards(this.value)" />
-    <button class="btn btn-ghost" id="refresh-btn" onclick="manualRefresh()" title="Controleer statussen nu">🔄 Refresh</button>
-    <button class="btn btn-ghost" id="edit-mode-btn" onclick="toggleEditMode()" title="Bewerkingsmodus aan/uit">✏️ Bewerken</button>
+    <button class="btn btn-ghost" id="refresh-btn" onclick="manualRefresh()" title="Statussen controleren">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
+      Refresh
+    </button>
+    <button class="btn btn-ghost" id="edit-mode-btn" onclick="toggleEditMode()" title="Bewerkingsmodus">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Bewerken
+    </button>
     <span id="clock"></span>
   </div>
 </header>
 
-<!-- STATS BAR -->
 <div class="stats-bar">
-  <div class="stat-item">
-    <div class="stat-dot"></div>
-    <span id="stat-online">0 online</span>
+  <div class="stat"><div class="pulse-dot"></div><span id="stat-online">—</span></div>
+  <div class="stat">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    <span id="stat-total">—</span>
   </div>
-  <div class="stat-item">📦 <span id="stat-total">0 services</span></div>
-  <div class="stat-item">🗓️ <span id="stat-date"></span></div>
+  <div class="stat">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <span id="stat-date">—</span>
+  </div>
 </div>
 
-<!-- MAIN -->
-<main id="main-content">
-  <!-- Sections worden dynamisch geladen -->
-</main>
+<main id="main-content"></main>
 
-<!-- CONTEXT MENU -->
-<div class="ctx-menu" id="ctx-menu">
-  <div class="ctx-item" onclick="ctxEdit()">✏️ Bewerken</div>
-  <div class="ctx-item" onclick="ctxOpen()">🔗 Openen</div>
-  <div class="ctx-item danger" onclick="ctxDelete()">🗑️ Verwijderen</div>
+<button class="edit-save-bar" onclick="toggleEditMode()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  Wijzigingen opslaan &amp; afsluiten
+</button>
+
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxEdit()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Bewerken
+  </div>
+  <div class="ctx-item" onclick="ctxOpen()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    Openen
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxDelete()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+    Verwijderen
+  </div>
 </div>
 
-<!-- MODAL: ADD/EDIT -->
-<div class="modal-overlay" id="modal">
+<div class="overlay" id="modal">
   <div class="modal">
-    <h2 id="modal-title">➕ Service toevoegen</h2>
+    <div class="modal-title" id="modal-title">Service toevoegen</div>
     <div class="form-group">
-      <label>Naam</label>
-      <input type="text" id="f-name" placeholder="Bijv. Proxmox" />
+      <label class="form-label">Naam</label>
+      <input class="form-input" type="text" id="f-name" placeholder="Bijv. Proxmox" />
     </div>
     <div class="form-group">
-      <label>URL</label>
-      <input type="text" id="f-url" placeholder="http://10.10.5.x:8006" />
+      <label class="form-label">URL</label>
+      <input class="form-input" type="text" id="f-url" placeholder="http://10.10.5.x:8006" />
     </div>
     <div class="form-group">
-      <label>Omschrijving</label>
-      <input type="text" id="f-desc" placeholder="Korte omschrijving" />
+      <label class="form-label">Omschrijving</label>
+      <input class="form-input" type="text" id="f-desc" placeholder="Korte omschrijving" />
     </div>
     <div class="form-group">
-      <label>Categorie</label>
-      <select id="f-cat"></select>
+      <label class="form-label">Categorie</label>
+      <select class="form-select" id="f-cat"></select>
     </div>
     <div class="form-group">
-      <label>Status</label>
-      <select id="f-status">
-        <option value="online">🟢 Online</option>
-        <option value="offline">🔴 Offline</option>
-        <option value="warning">🟡 Onderhoud</option>
+      <label class="form-label">Status</label>
+      <select class="form-select" id="f-status">
+        <option value="online">Online</option>
+        <option value="offline">Offline</option>
+        <option value="warning">Onderhoud</option>
       </select>
     </div>
     <div class="form-group">
-      <label>Tag (optioneel)</label>
-      <input type="text" id="f-tag" placeholder="LXC / VM / Docker" />
+      <label class="form-label">Tag</label>
+      <input class="form-input" type="text" id="f-tag" placeholder="LXC / VM / Docker" />
     </div>
     <div class="form-group">
-      <label>Icoon</label>
-      <div class="emoji-row" id="emoji-row"></div>
+      <label class="form-label">Icoon</label>
+      <div class="emoji-grid" id="emoji-grid"></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Annuleren</button>
-      <button class="btn btn-danger" id="delete-btn" onclick="deleteService()" style="display:none">Verwijderen</button>
+      <button class="btn btn-danger" id="delete-btn" onclick="confirmDelete()" style="display:none">Verwijderen</button>
       <button class="btn btn-primary" onclick="saveService()">Opslaan</button>
     </div>
   </div>
 </div>
 
-
-<!-- EDIT SAVE BAR -->
-<div class="edit-save-bar" onclick="toggleEditMode()">
-  ✅ Wijzigingen opslaan & afsluiten
-</div>
-
-<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════
+// ── CANVAS ACHTERGROND
+(function initCanvas(){
+  const canvas=document.getElementById('bg-canvas');
+  const ctx=canvas.getContext('2d');
+  const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+  let cols,drops;
+  const fs=13;
+  function resize(){
+    canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+    cols=Math.floor(canvas.width/fs);
+    drops=Array.from({length:cols},()=>Math.random()*-50);
+  }
+  function draw(){
+    ctx.fillStyle='rgba(10,12,16,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.font=fs+'px JetBrains Mono,monospace';
+    for(let i=0;i<cols;i++){
+      const y=drops[i]*fs;
+      const alpha=Math.max(0.05,Math.min(0.6,1-(y/canvas.height)));
+      ctx.fillStyle=`rgba(59,130,246,${alpha*0.7})`;
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*fs,y);
+      if(y>canvas.height&&Math.random()>0.975)drops[i]=0;
+      drops[i]+=0.4;
+    }
+  }
+  resize();window.addEventListener('resize',resize);setInterval(draw,50);
+})();
 
-const EMOJIS = ['🖥️','🐋','📦','🔒','📷','🎵','🎮','🌐','🔧','📊','💾','🗂️','🏠','🌿','🔗','🛡️','📡','⚙️','🚀','📺','🧪','🎛️','🔍','🗄️','🌍','🔑','💡','🧩','🤖','🖨️'];
+// ── STATE
+const EMOJIS=['🖥️','🐋','📦','🔒','📷','🎵','🎮','🌐','🔧','📊',
+              '💾','🗂️','🏠','🌿','🔗','🛡️','📡','⚙️','🚀','📺',
+              '🧪','🎛️','🔍','🗄️','🌍','🔑','💡','🧩','🤖','🖨️'];
 
-const DEFAULT_CATEGORIES = [
-  { id: 'infra',    name: '🖥️  Infrastructuur', color: '#6c63ff' },
-  { id: 'media',    name: '🎬  Media & Bestanden', color: '#ff6b6b' },
-  { id: 'netwerk',  name: '🌐  Netwerk',          color: '#00d4aa' },
-  { id: 'monitoring', name: '📊  Monitoring',     color: '#ffd166' },
-  { id: 'overig',   name: '🧩  Overig',           color: '#7c8db5' },
-];
+const DEFAULTS={
+  categories:[
+    {id:'infra',     name:'Infrastructuur',   color:'#3b82f6'},
+    {id:'media',     name:'Media & Bestanden', color:'#ef4444'},
+    {id:'netwerk',   name:'Netwerk',           color:'#06d6a0'},
+    {id:'monitoring',name:'Monitoring',        color:'#f59e0b'},
+    {id:'overig',    name:'Overig',            color:'#8b5cf6'},
+  ],
+  services:[
+    {id:'s1',name:'Proxmox VE',      url:'https://10.10.5.1:8006', desc:'Virtualisatie beheer',    cat:'infra',      icon:'🖥️',status:'online', tag:'Host'},
+    {id:'s2',name:'Nginx Proxy Mgr', url:'http://10.10.5.1:81',    desc:'Reverse proxy beheer',    cat:'netwerk',    icon:'🌐',status:'online', tag:'LXC'},
+    {id:'s3',name:'Immich',          url:'http://10.10.5.1:2283',  desc:'Foto & video bibliotheek',cat:'media',      icon:'📷',status:'online', tag:'LXC'},
+    {id:'s4',name:'Portainer',       url:'http://10.10.5.1:9000',  desc:'Docker container beheer', cat:'infra',      icon:'🐋',status:'online', tag:'LXC'},
+    {id:'s5',name:'Jellyfin',        url:'http://10.10.5.1:8096',  desc:'Media server',            cat:'media',      icon:'📺',status:'online', tag:'LXC'},
+    {id:'s6',name:'Cloudflared',     url:'http://10.10.5.1:14333', desc:'Zero Trust tunnel',       cat:'netwerk',    icon:'🛡️',status:'online', tag:'LXC'},
+    {id:'s7',name:'Uptime Kuma',     url:'http://10.10.5.1:3001',  desc:'Service monitoring',      cat:'monitoring', icon:'📊',status:'online', tag:'LXC'},
+    {id:'s8',name:'Home Assistant',  url:'http://10.10.5.1:8123',  desc:'Home automation',         cat:'overig',     icon:'🏠',status:'online', tag:'VM'},
+  ]
+};
 
-const DEFAULT_SERVICES = [
-  { id: 's1', name: 'Proxmox VE',      url: 'https://10.10.5.1:8006', desc: 'Virtualisatie beheer',     cat: 'infra',    icon: '🖥️', status: 'online',  tag: 'Host' },
-  { id: 's2', name: 'Nginx Proxy Mgr', url: 'http://10.10.5.1:81',   desc: 'Reverse proxy beheer',      cat: 'netwerk',  icon: '🌐', status: 'online',  tag: 'LXC' },
-  { id: 's3', name: 'Immich',           url: 'http://10.10.5.1:2283', desc: 'Foto & video bibliotheek',  cat: 'media',    icon: '📷', status: 'online',  tag: 'LXC' },
-  { id: 's4', name: 'Portainer',        url: 'http://10.10.5.1:9000', desc: 'Docker container beheer',   cat: 'infra',    icon: '🐋', status: 'online',  tag: 'LXC' },
-  { id: 's5', name: 'Jellyfin',         url: 'http://10.10.5.1:8096', desc: 'Media server',              cat: 'media',    icon: '📺', status: 'online',  tag: 'LXC' },
-  { id: 's6', name: 'Cloudflared',      url: 'http://10.10.5.1:14333', desc: 'Zero Trust tunnel',        cat: 'netwerk',  icon: '🛡️', status: 'online',  tag: 'LXC' },
-  { id: 's7', name: 'Uptime Kuma',      url: 'http://10.10.5.1:3001', desc: 'Service monitoring',        cat: 'monitoring', icon: '📊', status: 'online', tag: 'LXC' },
-  { id: 's8', name: 'Home Assistant',   url: 'http://10.10.5.1:8123', desc: 'Home automation',           cat: 'overig',   icon: '🏠', status: 'online',  tag: 'VM' },
-];
+let state=(()=>{
+  try{const s=JSON.parse(localStorage.getItem('proxdash'));if(s?.categories&&s?.services)return s;}catch{}
+  return structuredClone(DEFAULTS);
+})();
 
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
+let ctxTarget=null,editTarget=null,selectedEmoji='🖥️',editMode=false;
 
-let state = loadState();
-let ctxTarget = null;
-let editTarget = null;
-let selectedEmoji = '🖥️';
+function persist(){localStorage.setItem('proxdash',JSON.stringify(state));saveToFile();}
 
-function loadState() {
-  try {
-    const s = localStorage.getItem('homelab_dash');
-    if (s) return JSON.parse(s);
-  } catch(e) {}
-  return {
-    categories: DEFAULT_CATEGORIES,
-    services: DEFAULT_SERVICES
-  };
-}
-
-function saveState() {
-  localStorage.setItem('homelab_dash', JSON.stringify(state));
-}
-
-// ═══════════════════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════════════════
-
-function render() {
-  const main = document.getElementById('main-content');
-  main.innerHTML = '';
-
-  state.categories.forEach(cat => {
-    const services = state.services.filter(s => s.cat === cat.id);
-
-    const section = document.createElement('div');
-    section.innerHTML = `
-      <div class="section-header" style="--card-color:${cat.color}">
-        <input class="edit-section-name" value="${cat.name}" readonly
-          data-cat-id="${cat.id}"
-          onchange="renameCategory('${cat.id}', this.value)"
-          onblur="renameCategory('${cat.id}', this.value)"
-          onclick="event.stopPropagation();" />
+// ── RENDER
+function render(){
+  const main=document.getElementById('main-content');
+  main.innerHTML='';
+  for(const cat of state.categories){
+    const services=state.services.filter(s=>s.cat===cat.id);
+    const sec=document.createElement('div');
+    sec.innerHTML=`
+      <div class="section-header" style="--cat-color:${cat.color}">
+        <div class="section-dot"></div>
+        <input class="edit-section-name" value="${esc(cat.name)}" readonly
+          data-cat="${cat.id}"
+          onchange="renameCategory('${cat.id}',this.value)"
+          onblur="renameCategory('${cat.id}',this.value)"/>
+        <div class="section-line"></div>
       </div>
-      <div class="card-grid" id="grid-${cat.id}"></div>
-    `;
-    main.appendChild(section);
-
-    const grid = section.querySelector(`#grid-${cat.id}`);
-
-    services.forEach(svc => {
-      const card = createCard(svc, cat.color);
-      grid.appendChild(card);
-    });
-
-    // Add-knop
-    const addBtn = document.createElement('div');
-    addBtn.className = 'add-card';
-    addBtn.innerHTML = `<span style="font-size:1.4rem">＋</span><span>Toevoegen</span>`;
-    addBtn.onclick = () => openModal(null, cat.id);
-    grid.appendChild(addBtn);
-  });
-
+      <div class="card-grid" id="grid-${cat.id}"></div>`;
+    main.appendChild(sec);
+    const grid=sec.querySelector(`#grid-${cat.id}`);
+    for(const svc of services)grid.appendChild(makeCard(svc,cat.color));
+    const add=document.createElement('button');
+    add.className='add-card';
+    add.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Toevoegen</span>`;
+    add.onclick=()=>openModal(null,cat.id);
+    grid.appendChild(add);
+  }
   updateStats();
+  if(editMode)applyEditMode(true);
 }
 
-function createCard(svc, color) {
-  const card = document.createElement('a');
-  card.className = 'card';
-  card.href = svc.url;
-  card.target = '_blank';
-  card.dataset.id = svc.id;
-  card.dataset.name = svc.name.toLowerCase();
-  card.dataset.desc = svc.desc.toLowerCase();
-  card.style.setProperty('--card-color', color);
-
-  const statusClass = { online: 'status-online', offline: 'status-offline', warning: 'status-warning' }[svc.status] || 'status-online';
-  const statusLabel = { online: 'Online', offline: 'Offline', warning: 'Onderhoud' }[svc.status] || 'Online';
-
-  card.innerHTML = `
+function makeCard(svc,catColor){
+  const card=document.createElement('a');
+  card.className='card';card.href=svc.url;card.target='_blank';card.rel='noopener noreferrer';
+  card.dataset.id=svc.id;card.dataset.name=svc.name.toLowerCase();card.dataset.desc=(svc.desc||'').toLowerCase();
+  card.style.setProperty('--cat-color',catColor);
+  const stMap={online:{cls:'s-online',lbl:'Online'},offline:{cls:'s-offline',lbl:'Offline'},warning:{cls:'s-warning',lbl:'Onderhoud'}};
+  const st=stMap[svc.status]||stMap.online;
+  let host='';try{host=new URL(svc.url).host;}catch{}
+  card.innerHTML=`
+    <button class="card-edit-btn" title="Bewerken"
+      onclick="event.preventDefault();event.stopPropagation();openModal(state.services.find(s=>s.id==='${svc.id}'))">✏️</button>
     <div class="card-top">
       <div class="card-icon">${svc.icon}</div>
-      <span class="status-badge ${statusClass}">${statusLabel}</span>
+      <span class="status-pill ${st.cls}">${st.lbl}</span>
     </div>
-    <div class="card-edit-overlay" onclick="event.preventDefault(); event.stopPropagation(); openModal(state.services.find(s=>s.id==='${svc.id}'))">✏️</div>
-    <input class="editable-name card-name" value="${svc.name}" readonly
-      onchange="renameService('${svc.id}', this.value)"
-      onclick="event.preventDefault(); event.stopPropagation();"
-      onblur="renameService('${svc.id}', this.value)" />
-    <div class="card-desc">${svc.desc}</div>
-    <div class="card-meta">
-      <span class="card-tag">${svc.tag || ''}</span>
-      <span>${new URL(svc.url).hostname || ''}</span>
-    </div>
-  `;
-
-  card.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    showCtxMenu(e.clientX, e.clientY, svc.id);
-  });
-
+    <input class="editable-name card-name" value="${esc(svc.name)}" readonly
+      onchange="renameService('${svc.id}',this.value)"
+      onblur="renameService('${svc.id}',this.value)"
+      onclick="event.preventDefault();event.stopPropagation();"/>
+    <div class="card-desc">${esc(svc.desc)}</div>
+    <div class="card-footer">
+      <span class="card-tag">${esc(svc.tag||'')}</span>
+      <span>${host}</span>
+    </div>`;
+  card.addEventListener('contextmenu',e=>{e.preventDefault();showCtx(e.clientX,e.clientY,svc.id);});
   return card;
 }
 
-// ═══════════════════════════════════════════════
-//  STATS
-// ═══════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-function updateStats() {
-  const total = state.services.length;
-  const online = state.services.filter(s => s.status === 'online').length;
-  document.getElementById('stat-total').textContent = total + ' services';
-  document.getElementById('stat-online').textContent = online + ' online';
+// ── STATS
+function updateStats(){
+  const total=state.services.length,online=state.services.filter(s=>s.status==='online').length;
+  document.getElementById('stat-total').textContent=`${total} services`;
+  document.getElementById('stat-online').textContent=`${online} online`;
+  const now=new Date();
+  document.getElementById('stat-date').textContent=now.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 }
 
-// ═══════════════════════════════════════════════
-//  CLOCK
-// ═══════════════════════════════════════════════
-
-function updateClock() {
-  const now = new Date();
-  const time = now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  document.getElementById('clock').textContent = time;
-  const date = now.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
-  document.getElementById('stat-date').textContent = date;
+// ── KLOK
+function tickClock(){
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
-// ═══════════════════════════════════════════════
-//  SEARCH
-// ═══════════════════════════════════════════════
-
-function filterCards(query) {
-  const q = query.toLowerCase().trim();
-  document.querySelectorAll('.card').forEach(card => {
-    const name = card.dataset.name || '';
-    const desc = card.dataset.desc || '';
-    card.classList.toggle('hidden', q && !name.includes(q) && !desc.includes(q));
+// ── ZOEKEN
+function filterCards(q){
+  q=q.toLowerCase().trim();
+  document.querySelectorAll('a.card').forEach(c=>{
+    c.classList.toggle('hidden',!(!q||c.dataset.name.includes(q)||c.dataset.desc.includes(q)));
   });
 }
 
-// ═══════════════════════════════════════════════
-//  MODAL
-// ═══════════════════════════════════════════════
-
-function openModal(svc, defaultCat) {
-  editTarget = svc ? svc.id : null;
-  const isEdit = !!svc;
-
-  document.getElementById('modal-title').textContent = isEdit ? '✏️ Service bewerken' : '➕ Service toevoegen';
-  document.getElementById('f-name').value  = svc?.name  || '';
-  document.getElementById('f-url').value   = svc?.url   || 'http://10.10.5.';
-  document.getElementById('f-desc').value  = svc?.desc  || '';
-  document.getElementById('f-tag').value   = svc?.tag   || '';
-  document.getElementById('f-status').value = svc?.status || 'online';
-  document.getElementById('delete-btn').style.display = isEdit ? 'block' : 'none';
-
-  // Cat dropdown
-  const catSel = document.getElementById('f-cat');
-  catSel.innerHTML = state.categories.map(c =>
-    `<option value="${c.id}" ${(svc?.cat || defaultCat) === c.id ? 'selected' : ''}>${c.name}</option>`
-  ).join('');
-
-  // Emoji picker
-  selectedEmoji = svc?.icon || '🖥️';
-  const row = document.getElementById('emoji-row');
-  row.innerHTML = EMOJIS.map(e =>
-    `<button class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji(this,'${e}')">${e}</button>`
-  ).join('');
-
-  document.getElementById('modal').classList.add('active');
-  document.getElementById('f-name').focus();
+// ── EDIT MODE
+function toggleEditMode(){
+  editMode=!editMode;
+  document.body.classList.toggle('edit-mode',editMode);
+  applyEditMode(editMode);
+  const btn=document.getElementById('edit-mode-btn');
+  if(editMode){btn.innerHTML=btn.innerHTML.replace('Bewerken','Klaar');showToast('✏️ Bewerkingsmodus actief');}
+  else{btn.innerHTML=btn.innerHTML.replace('Klaar','Bewerken');persist();showToast('💾 Opgeslagen');}
 }
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('active');
-  editTarget = null;
+function applyEditMode(active){
+  document.querySelectorAll('.editable-name').forEach(i=>i.readOnly=!active);
+  document.querySelectorAll('.edit-section-name').forEach(i=>i.readOnly=!active);
+  document.querySelectorAll('a.card').forEach(card=>{
+    if(active){if(!card.dataset.href)card.dataset.href=card.getAttribute('href')||'';card.removeAttribute('href');}
+    else{if(card.dataset.href)card.setAttribute('href',card.dataset.href);}
+  });
 }
 
-function selectEmoji(btn, emoji) {
-  selectedEmoji = emoji;
-  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
+function renameService(id,val){val=val.trim();if(!val)return;const s=state.services.find(s=>s.id===id);if(s)s.name=val;}
+function renameCategory(id,val){val=val.trim();if(!val)return;const c=state.categories.find(c=>c.id===id);if(c)c.name=val;}
+
+// ── ONLINE/OFFLINE CHECK
+async function checkService(url){
+  try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),3000);
+    await fetch(url,{method:'GET',mode:'no-cors',signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(tid);return'online';
+  }catch{return'offline';}
 }
 
-function saveService() {
-  const name = document.getElementById('f-name').value.trim();
-  const url  = document.getElementById('f-url').value.trim();
-  if (!name || !url) { showToast('⚠️ Naam en URL zijn verplicht'); return; }
-
-  const svc = {
-    id:     editTarget || ('s' + Date.now()),
-    name,
-    url,
-    desc:   document.getElementById('f-desc').value.trim(),
-    cat:    document.getElementById('f-cat').value,
-    status: document.getElementById('f-status').value,
-    tag:    document.getElementById('f-tag').value.trim(),
-    icon:   selectedEmoji,
-  };
-
-  if (editTarget) {
-    const idx = state.services.findIndex(s => s.id === editTarget);
-    if (idx !== -1) state.services[idx] = svc;
-  } else {
-    state.services.push(svc);
+async function manualRefresh(){
+  const btn=document.getElementById('refresh-btn');
+  btn.disabled=true;btn.innerHTML=btn.innerHTML.replace('Refresh','Bezig...');
+  let changed=false;
+  for(const svc of state.services){
+    if(svc.status==='warning')continue;
+    const next=await checkService(svc.url);
+    if(next!==svc.status){svc.status=next;changed=true;}
   }
-
-  saveState();
-  render();
-  closeModal();
-  showToast('✅ Opgeslagen!');
+  persist();if(changed)render();
+  btn.disabled=false;btn.innerHTML=btn.innerHTML.replace('Bezig...','Refresh');
+  showToast(changed?'🔄 Statussen bijgewerkt':'✅ Alles up-to-date');
 }
 
-function deleteService() {
-  if (!editTarget) return;
-  state.services = state.services.filter(s => s.id !== editTarget);
-  saveState();
-  render();
-  closeModal();
-  showToast('🗑️ Verwijderd');
+// ── OPSLAAN NAAR BESTAND
+async function saveToFile(){
+  try{await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});}
+  catch{}
 }
 
-// ═══════════════════════════════════════════════
-//  CONTEXT MENU
-// ═══════════════════════════════════════════════
+// ── MODAL
+function openModal(svc,defaultCat){
+  editTarget=svc?.id??null;const isEdit=!!svc;
+  document.getElementById('modal-title').textContent=isEdit?'✏️ Service bewerken':'➕ Service toevoegen';
+  document.getElementById('f-name').value=svc?.name||'';
+  document.getElementById('f-url').value=svc?.url||'http://10.10.5.';
+  document.getElementById('f-desc').value=svc?.desc||'';
+  document.getElementById('f-tag').value=svc?.tag||'';
+  document.getElementById('f-status').value=svc?.status||'online';
+  document.getElementById('delete-btn').style.display=isEdit?'':'none';
+  document.getElementById('f-cat').innerHTML=state.categories
+    .map(c=>`<option value="${c.id}"${(svc?.cat||defaultCat)===c.id?' selected':''}>${c.name}</option>`).join('');
+  selectedEmoji=svc?.icon||'🖥️';
+  document.getElementById('emoji-grid').innerHTML=EMOJIS
+    .map(e=>`<button class="emoji-opt${e===selectedEmoji?' active':''}" onclick="pickEmoji(this,'${e}')">${e}</button>`).join('');
+  document.getElementById('modal').classList.add('active');
+  setTimeout(()=>document.getElementById('f-name').focus(),50);
+}
 
-function showCtxMenu(x, y, id) {
-  ctxTarget = id;
-  const menu = document.getElementById('ctx-menu');
-  menu.style.left = x + 'px';
-  menu.style.top  = y + 'px';
+function closeModal(){document.getElementById('modal').classList.remove('active');editTarget=null;}
+function pickEmoji(btn,e){selectedEmoji=e;document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+
+function saveService(){
+  const name=document.getElementById('f-name').value.trim();
+  const url=document.getElementById('f-url').value.trim();
+  if(!name||!url){showToast('⚠️ Naam en URL zijn verplicht');return;}
+  const svc={id:editTarget||('s'+Date.now()),name,url,
+    desc:document.getElementById('f-desc').value.trim(),
+    cat:document.getElementById('f-cat').value,
+    status:document.getElementById('f-status').value,
+    tag:document.getElementById('f-tag').value.trim(),
+    icon:selectedEmoji};
+  if(editTarget){const i=state.services.findIndex(s=>s.id===editTarget);if(i>=0)state.services[i]=svc;}
+  else state.services.push(svc);
+  persist();render();closeModal();showToast('✅ Opgeslagen');
+}
+
+function confirmDelete(){
+  if(!editTarget)return;
+  state.services=state.services.filter(s=>s.id!==editTarget);
+  persist();render();closeModal();showToast('🗑️ Verwijderd');
+}
+
+// ── CONTEXT MENU
+function showCtx(x,y,id){
+  ctxTarget=id;const menu=document.getElementById('ctx-menu');
+  menu.style.cssText=`left:${Math.min(x,window.innerWidth-180)}px;top:${Math.min(y,window.innerHeight-120)}px`;
   menu.classList.add('active');
 }
+function hideCtx(){document.getElementById('ctx-menu').classList.remove('active');}
+function ctxEdit(){const s=state.services.find(s=>s.id===ctxTarget);if(s)openModal(s);hideCtx();}
+function ctxOpen(){const s=state.services.find(s=>s.id===ctxTarget);if(s)window.open(s.url,'_blank');hideCtx();}
+function ctxDelete(){if(!ctxTarget)return;state.services=state.services.filter(s=>s.id!==ctxTarget);persist();render();hideCtx();showToast('🗑️ Verwijderd');}
 
-function hideCtxMenu() {
-  document.getElementById('ctx-menu').classList.remove('active');
+// ── TOAST
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-function ctxEdit() {
-  const svc = state.services.find(s => s.id === ctxTarget);
-  if (svc) openModal(svc);
-  hideCtxMenu();
-}
-
-function ctxOpen() {
-  const svc = state.services.find(s => s.id === ctxTarget);
-  if (svc) window.open(svc.url, '_blank');
-  hideCtxMenu();
-}
-
-function ctxDelete() {
-  state.services = state.services.filter(s => s.id !== ctxTarget);
-  saveState();
-  render();
-  hideCtxMenu();
-  showToast('🗑️ Verwijderd');
-}
-
-// ═══════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ═══════════════════════════════════════════════
-//  EXPORT / IMPORT
-// ═══════════════════════════════════════════════
-
-
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!data.categories || !data.services) throw new Error('Ongeldig formaat');
-      state = data;
-      saveState();
-      render();
-      showToast('✅ Configuratie geladen!');
-    } catch(err) {
-      showToast('❌ Ongeldig JSON-bestand');
-    }
-    event.target.value = '';
-  };
-  reader.readAsText(file);
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'homelab-dashboard-backup.json';
-  a.click();
-  showToast('📥 Backup gedownload!');
-}
-
-// ═══════════════════════════════════════════════
-//  EVENT LISTENERS
-// ═══════════════════════════════════════════════
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('#ctx-menu')) hideCtxMenu();
-  if (e.target === document.getElementById('modal')) closeModal();
+// ── EVENTS
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#ctx-menu'))hideCtx();
+  if(e.target===document.getElementById('modal'))closeModal();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeModal();hideCtx();if(editMode)toggleEditMode();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();const s=document.getElementById('search-input');s.focus();s.select();}
 });
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeModal(); hideCtxMenu(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-    e.preventDefault();
-    document.getElementById('search-input').focus();
-  }
-});
-
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
-
-render();
-updateClock();
-setInterval(updateClock, 1000);
-// Statussen worden handmatig gerefreshed via de knop
-
-// ═══════════════════════════════════════════════
-//  ONLINE / OFFLINE CHECK
-// ═══════════════════════════════════════════════
-
-async function checkService(url) {
-  try {
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 3000);
-    // mode: no-cors geeft een opaque response terug als server reageert
-    // Een AbortError betekent timeout = offline
-    await fetch(url, { method: 'GET', mode: 'no-cors', signal: controller.signal, cache: 'no-store' });
-    clearTimeout(tid);
-    return 'online';
-  } catch (e) {
-    return 'offline';
-  }
-}
-
-async function checkAllServices() {
-  let changed = false;
-  for (const svc of state.services) {
-    if (svc.status === 'warning') continue; // onderhoud: niet automatisch overschrijven
-    const newStatus = await checkService(svc.url);
-    if (newStatus !== svc.status) {
-      svc.status = newStatus;
-      changed = true;
-    }
-  }
-  saveState();
-  if (changed) {
-    render();
-    showToast('🔄 Statussen bijgewerkt');
-  }
-  // Schrijf ook terug naar bestand op server
-  saveToFile();
-}
-
-// ═══════════════════════════════════════════════
-//  TERUGSCHRIJVEN NAAR HTML BESTAND (via backend)
-// ═══════════════════════════════════════════════
-
-async function saveToFile() {
-  try {
-    await fetch('/api/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(state)
-    });
-  } catch (e) {
-    // Geen backend beschikbaar (bijv. file://) — stil falen
-  }
-}
-
-// Patch saveService zodat wijzigingen ook naar bestand gaan
-const _origSaveService = saveService;
-saveService = function() {
-  _origSaveService();
-  saveToFile();
-};
-
-
-// ═══════════════════════════════════════════════
-//  EDIT MODE
-// ═══════════════════════════════════════════════
-
-let editMode = false;
-
-function toggleEditMode() {
-  editMode = !editMode;
-  document.body.classList.toggle('edit-mode', editMode);
-  const btn = document.getElementById('edit-mode-btn');
-  btn.textContent = editMode ? '✅ Klaar' : '✏️ Bewerken';
-
-  // In edit mode: voorkom navigatie bij klikken op kaarten
-  document.querySelectorAll('a.card').forEach(card => {
-    if (editMode) {
-      card.dataset.href = card.href;
-      card.removeAttribute('href');
-    } else {
-      if (card.dataset.href) card.href = card.dataset.href;
-    }
-  });
-
-  // Maak naam-inputs bewerkbaar/readonly
-  document.querySelectorAll('.editable-name').forEach(inp => {
-    inp.readOnly = !editMode;
-  });
-  document.querySelectorAll('.edit-section-name').forEach(inp => {
-    inp.readOnly = !editMode;
-  });
-
-  if (!editMode) {
-    saveState();
-    saveToFile();
-    showToast('💾 Wijzigingen opgeslagen');
-  } else {
-    showToast('✏️ Bewerkingsmodus actief');
-  }
-}
-
-function renameService(id, newName) {
-  if (!newName.trim()) return;
-  const svc = state.services.find(s => s.id === id);
-  if (svc && svc.name !== newName.trim()) {
-    svc.name = newName.trim();
-  }
-}
-
-function renameCategory(id, newName) {
-  if (!newName.trim()) return;
-  const cat = state.categories.find(c => c.id === id);
-  if (cat && cat.name !== newName.trim()) {
-    cat.name = newName.trim();
-  }
-}
-
-// ═══════════════════════════════════════════════
-//  HANDMATIGE REFRESH KNOP
-// ═══════════════════════════════════════════════
-
-async function manualRefresh() {
-  const btn = document.getElementById('refresh-btn');
-  btn.textContent = '⏳ Bezig...';
-  btn.disabled = true;
-
-  let changed = false;
-  for (const svc of state.services) {
-    if (svc.status === 'warning') continue;
-    const newStatus = await checkService(svc.url);
-    if (newStatus !== svc.status) {
-      svc.status = newStatus;
-      changed = true;
-    }
-  }
-
-  saveState();
-  saveToFile();
-  render();
-
-  btn.textContent = '🔄 Refresh';
-  btn.disabled = false;
-  showToast(changed ? '🔄 Statussen bijgewerkt' : '✅ Alles up-to-date');
-}
-
+// ── INIT
+render();tickClock();setInterval(tickClock,1000);
 </script>
 </body>
 </html>
