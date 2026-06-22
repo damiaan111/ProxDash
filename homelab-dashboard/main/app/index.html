@@ -287,7 +287,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">URL</label>
-      <input class="form-input" type="text" id="f-url" placeholder="http://10.10.5.x:8006" />
+      <input class="form-input" type="text" id="f-url" placeholder="http://192.168.1.x:8006" />
     </div>
     <div class="form-group">
       <label class="form-label">Omschrijving</label>
@@ -361,18 +361,18 @@ const DEFAULTS={
     {id:'overig',name:'Overig',color:'#8b5cf6'},
   ],
   services:[
-    {id:'s1',name:'Proxmox VE',url:'https://10.10.5.1:8006',desc:'Virtualisatie beheer',cat:'infra',icon:'🖥️',status:'online',tag:'Host'},
-    {id:'s2',name:'Nginx Proxy Mgr',url:'http://10.10.5.1:81',desc:'Reverse proxy beheer',cat:'netwerk',icon:'🌐',status:'online',tag:'LXC'},
-    {id:'s3',name:'Immich',url:'http://10.10.5.1:2283',desc:'Foto & video bibliotheek',cat:'media',icon:'📷',status:'online',tag:'LXC'},
-    {id:'s4',name:'Portainer',url:'http://10.10.5.1:9000',desc:'Docker container beheer',cat:'infra',icon:'🐋',status:'online',tag:'LXC'},
-    {id:'s5',name:'Jellyfin',url:'http://10.10.5.1:8096',desc:'Media server',cat:'media',icon:'📺',status:'online',tag:'LXC'},
-    {id:'s6',name:'Cloudflared',url:'http://10.10.5.1:14333',desc:'Zero Trust tunnel',cat:'netwerk',icon:'🛡️',status:'online',tag:'LXC'},
-    {id:'s7',name:'Uptime Kuma',url:'http://10.10.5.1:3001',desc:'Service monitoring',cat:'monitoring',icon:'📊',status:'online',tag:'LXC'},
-    {id:'s8',name:'Home Assistant',url:'http://10.10.5.1:8123',desc:'Home automation',cat:'overig',icon:'🏠',status:'online',tag:'VM'},
+    {id:'s1',name:'Proxmox VE',url:'https://192.168.1.1:8006',desc:'Virtualisatie beheer',cat:'infra',icon:'🖥️',status:'online',tag:'Host'},
+    {id:'s2',name:'Nginx Proxy Mgr',url:'http://192.168.1.1:81',desc:'Reverse proxy beheer',cat:'netwerk',icon:'🌐',status:'online',tag:'LXC'},
+    {id:'s3',name:'Immich',url:'http://192.168.1.1:2283',desc:'Foto & video bibliotheek',cat:'media',icon:'📷',status:'online',tag:'LXC'},
+    {id:'s4',name:'Portainer',url:'http://192.168.1.1:9000',desc:'Docker container beheer',cat:'infra',icon:'🐋',status:'online',tag:'LXC'},
+    {id:'s5',name:'Jellyfin',url:'http://192.168.1.1:8096',desc:'Media server',cat:'media',icon:'📺',status:'online',tag:'LXC'},
+    {id:'s6',name:'Cloudflared',url:'http://192.168.1.1:14333',desc:'Zero Trust tunnel',cat:'netwerk',icon:'🛡️',status:'online',tag:'LXC'},
+    {id:'s7',name:'Uptime Kuma',url:'http://192.168.1.1:3001',desc:'Service monitoring',cat:'monitoring',icon:'📊',status:'online',tag:'LXC'},
+    {id:'s8',name:'Home Assistant',url:'http://192.168.1.1:8123',desc:'Home automation',cat:'overig',icon:'🏠',status:'online',tag:'VM'},
   ]
 };
 
-// ── STATE — laadt van server, valt terug op localStorage, dan defaults
+// ── STATE
 let state;
 (async()=>{
   try{
@@ -388,7 +388,6 @@ let state;
 
 let ctxTarget=null,editTarget=null,selectedEmoji='🖥️',editMode=false;
 
-// persist() wordt ALLEEN aangeroepen bij expliciet opslaan (niet bij elke blur)
 function persist(){
   localStorage.setItem('proxdash',JSON.stringify(state));
   saveToServer();
@@ -412,7 +411,6 @@ function render(){
   main.innerHTML='';
   for(const cat of state.categories){
     const services=state.services.filter(s=>s.cat===cat.id);
-    // Verberg lege categorieën in normale modus
     if(!editMode && services.length===0) continue;
     const sec=document.createElement('div');
     sec.innerHTML=`
@@ -457,14 +455,12 @@ function makeCard(svc,catColor){
   const st=stMap[svc.status]||stMap.online;
   let host='';try{host=new URL(svc.url).host;}catch{}
 
-  // Laatste controle timestamp
   let checkedStr='';
   if(svc.lastChecked){
     const diff=Math.round((Date.now()-svc.lastChecked)/60000);
     checkedStr=diff<1?'zonet':diff===1?'1 min geleden':`${diff} min geleden`;
   }
 
-  // Edit knop via dataset — geen inline JS met svc.id
   const editBtn=document.createElement('button');
   editBtn.className='card-edit-btn';
   editBtn.title='Bewerken';
@@ -490,7 +486,6 @@ function makeCard(svc,catColor){
 
   card.prepend(editBtn);
 
-  // Rename: sla op in lokale state, GEEN persist() hier
   card.querySelector('.editable-name').addEventListener('change',e=>{
     const val=e.target.value.trim();
     if(val){const s=state.services.find(s=>s.id===svc.id);if(s)s.name=val;}
@@ -504,7 +499,6 @@ function makeCard(svc,catColor){
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-// ── STATS
 function updateStats(){
   const total=state.services.length;
   const online=state.services.filter(s=>s.status==='online').length;
@@ -515,14 +509,12 @@ function updateStats(){
   });
 }
 
-// ── KLOK
 function tickClock(){
   document.getElementById('clock').textContent=new Date().toLocaleTimeString('nl-NL',{
     hour:'2-digit',minute:'2-digit',second:'2-digit'
   });
 }
 
-// ── ZOEKEN
 function filterCards(q){
   q=q.toLowerCase().trim();
   document.querySelectorAll('a.card').forEach(c=>{
@@ -530,20 +522,19 @@ function filterCards(q){
   });
 }
 
-// ── EDIT MODE — persist() alleen hier bij afsluiten
 function toggleEditMode(){
   editMode=!editMode;
   document.body.classList.toggle('edit-mode',editMode);
   const btn=document.getElementById('edit-mode-btn');
   if(editMode){
     applyEditMode(true);
-    render(); // herrender om lege categorieën te tonen
+    render();
     btn.innerHTML=btn.innerHTML.replace('Bewerken','Klaar');
     showToast('✏️ Bewerkingsmodus — druk E of klik Klaar om op te slaan');
   }else{
     applyEditMode(false);
-    persist(); // ENIGE plek buiten modal waar we opslaan
-    render(); // herrender om lege categorieën weer te verbergen
+    persist();
+    render();
     btn.innerHTML=btn.innerHTML.replace('Klaar','Bewerken');
     showToast('💾 Opgeslagen');
   }
@@ -568,14 +559,16 @@ function renameCategory(id,val){
   if(c) c.name=val;
 }
 
-// ── STATUS CHECK
+// ── STATUS CHECK via server-side /api/ping (omzeilt CORS en mixed-content)
 async function checkService(url){
   try{
-    const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),4000);
-    await fetch(url,{method:'GET',mode:'no-cors',signal:ctrl.signal,cache:'no-store'});
-    clearTimeout(tid);return'online';
-  }catch{return'offline';}
+    const r=await fetch('/api/ping?url='+encodeURIComponent(url),{cache:'no-store'});
+    if(!r.ok) return 'offline';
+    const d=await r.json();
+    return d.status==='online'?'online':'offline';
+  }catch{
+    return 'offline';
+  }
 }
 
 async function manualRefresh(){
@@ -602,7 +595,7 @@ function openModal(svc,defaultCat){
   const isEdit=!!svc;
   document.getElementById('modal-title').textContent=isEdit?'✏️ Service bewerken':'➕ Service toevoegen';
   document.getElementById('f-name').value=svc?.name||'';
-  document.getElementById('f-url').value=svc?.url||'http://10.10.5.';
+  document.getElementById('f-url').value=svc?.url||'http://';
   document.getElementById('f-desc').value=svc?.desc||'';
   document.getElementById('f-tag').value=svc?.tag||'';
   document.getElementById('f-status').value=svc?.status||'online';
@@ -659,7 +652,6 @@ function confirmDelete(){
   persist();render();closeModal();showToast('🗑️ Verwijderd');
 }
 
-// ── CONTEXT MENU
 function showCtx(x,y,id){
   ctxTarget=id;
   const menu=document.getElementById('ctx-menu');
@@ -677,7 +669,6 @@ function ctxDelete(){
   persist();render();hideCtx();showToast('🗑️ Verwijderd');
 }
 
-// ── TOAST
 let _toastTimer;
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -686,7 +677,6 @@ function showToast(msg){
   _toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// ── KEYBOARD
 document.addEventListener('click',e=>{
   if(!e.target.closest('#ctx-menu')) hideCtx();
   if(e.target===document.getElementById('modal')) closeModal();
@@ -699,7 +689,6 @@ document.addEventListener('keydown',e=>{
     e.preventDefault();
     const s=document.getElementById('search-input');s.focus();s.select();
   }
-  // E shortcut — alleen als je niet aan het typen bent
   if(e.key==='e'&&!typing&&!e.metaKey&&!e.ctrlKey) toggleEditMode();
 });
 </script>
